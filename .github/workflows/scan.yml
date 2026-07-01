@@ -20,9 +20,10 @@ jobs:
           python-version: '3.11'
 
       - name: 📦 패키지 설치
-        run: pip install -r requirements.txt
+        run: pip install -r ganbox-radar/requirements.txt
 
       - name: 🛰 GAN BOX Radar 스캔 실행
+        working-directory: ganbox-radar
         env:
           FIREBASE_KEY:    ${{ secrets.FIREBASE_KEY }}
           EMAIL_FROM:      ${{ secrets.EMAIL_FROM }}
