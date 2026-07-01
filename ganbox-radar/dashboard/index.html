@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GAN BOX Radar</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0d1117;color:#e6edf3;font-family:'Courier New',monospace;min-height:100vh}
+.header{background:#0f2040;border-bottom:1px solid #2a4060;padding:16px 20px;
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.title{font-size:18px;font-weight:700;color:#58a6ff}
+.scan-info{font-size:12px;color:#8b949e}
+.scan-time{color:#3fb950;font-weight:700}
+.container{max-width:900px;margin:0 auto;padding:20px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.stat{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:14px;text-align:center}
+.stat-val{font-size:28px;font-weight:700;color:#58a6ff}
+.stat-val.green{color:#3fb950}
+.stat-label{font-size:11px;color:#8b949e;margin-top:4px}
+.section-title{font-size:13px;font-weight:700;color:#8b949e;
+  letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px}
+.ticker-grid{display:flex;flex-direction:column;gap:8px;margin-bottom:24px}
+.ticker-card{background:#161b22;border:1px solid #30363d;border-radius:8px;
+  padding:12px 16px;display:grid;grid-template-columns:80px 1fr 80px 80px 80px 100px;
+  align-items:center;gap:8px;transition:border-color .2s}
+.ticker-card.active{border-color:rgba(63,185,80,.5);background:#0a1a0a}
+.ticker-card.s1{border-color:#f85149;background:#1a0505}
+.t-ticker{font-size:15px;font-weight:700;color:#fff}
+.t-name{font-size:11px;color:#8b949e}
+.t-status{font-size:12px;font-weight:700}
+.s-active{color:#3fb950}
+.s-s1{color:#f85149}
+.s-none{color:#484f58}
+.t-days{font-size:12px;color:#d29922;font-weight:700}
+.t-vpf{font-size:12px}
+.vpf-neg{color:#f85149}
+.vpf-pos{color:#3fb950}
+.vpf-neu{color:#8b949e}
+.t-tier{font-size:10px;color:#484f58}
+.tv-btn{background:rgba(88,166,255,.15);border:1px solid rgba(88,166,255,.3);
+  border-radius:4px;padding:4px 8px;color:#58a6ff;font-size:10px;
+  cursor:pointer;text-decoration:none;display:inline-block;white-space:nowrap}
+.no-candidate{background:#161b22;border:1px solid #30363d;border-radius:8px;
+  padding:20px;text-align:center;color:#8b949e;font-size:13px}
+.loading{text-align:center;padding:40px;color:#58a6ff;font-size:14px}
+.error{background:#1a0505;border:1px solid rgba(248,81,73,.4);border-radius:8px;
+  padding:16px;color:#f85149;font-size:13px;margin-bottom:16px}
+@media(max-width:640px){
+  .stats{grid-template-columns:1fr 1fr}
+  .ticker-card{grid-template-columns:60px 1fr 60px 60px}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="title">🛰 GAN BOX Radar</div>
+  <div class="scan-info">
+    마지막 스캔: <span class="scan-time" id="scanTime">로딩 중...</span>
+  </div>
+</div>
+
+<div class="container">
+  <div id="errorBox" class="error" style="display:none"></div>
+  <div id="loadingBox" class="loading">📡 데이터 로딩 중...</div>
+  <div id="mainContent" style="display:none">
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-val" id="totalCount">—</div>
+        <div class="stat-label">감시 종목</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val green" id="candidateCount">—</div>
+        <div class="stat-label">Candidate</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val" id="s1Count" style="color:#f85149">—</div>
+        <div class="stat-label">S1 신호 (오늘)</div>
+      </div>
+    </div>
+
+    <div class="section-title" style="color:#f85149;margin-bottom:8px" id="s1Section" style="display:none">
+      🚨 S1 신호 발생
+    </div>
+    <div class="ticker-grid" id="s1List"></div>
+
+    <div class="section-title">🟢 Candidate 종목</div>
+    <div class="ticker-grid" id="candidateList"></div>
+
+    <div class="section-title" style="margin-top:20px">⚪ 감시 중 (해당 없음)</div>
+    <div class="ticker-grid" id="noneList"></div>
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, getDocs, doc, getDoc }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// ⚠️ 아래 값을 Firebase 프로젝트 설정에서 복사하세요
+const firebaseConfig = {
+  apiKey:            "YOUR_API_KEY",
+  authDomain:        "YOUR_PROJECT.firebaseapp.com",
+  projectId:         "YOUR_PROJECT_ID",
+  storageBucket:     "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId:             "YOUR_APP_ID"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+const TIER_NAMES = {
+  "TQQQ":"나스닥100 3배","TECL":"테크 3배","SOXL":"반도체 3배",
+  "SPXL":"S&P500 3배","UPRO":"S&P500 3배(PS)","LABU":"바이오 3배",
+  "CURE":"헬스케어 3배","FAS":"금융 3배","TNA":"소형주 3배","DFEN":"방산 3배",
+  "NVDA":"엔비디아","AMD":"AMD","MSFT":"마이크로소프트","META":"메타",
+  "AMZN":"아마존","GOOGL":"알파벳","TSLA":"테슬라","AAPL":"애플",
+  "QLD":"나스닥 2배","SSO":"S&P500 2배","SMH":"반도체 ETF",
+  "XLK":"테크 ETF","XAR":"방산 ETF","CIBR":"사이버보안 ETF"
+};
+
+function vpfColor(v){
+  if(v===null||v===undefined) return 'vpf-neu';
+  return v < -1.0 ? 'vpf-neg' : v > 1.0 ? 'vpf-pos' : 'vpf-neu';
+}
+
+function tvUrl(ticker){
+  return `https://www.tradingview.com/chart/?symbol=${ticker}`;
+}
+
+function makeCard(ticker, data){
+  const status   = data.status || "NONE";
+  const days     = data.days_active || 0;
+  const vpf      = data.vpf;
+  const vpfStr   = vpf != null ? vpf.toFixed(3) : "N/A";
+  const closePx  = data.close != null ? `$${data.close.toFixed(2)}` : "—";
+  const name     = TIER_NAMES[ticker] || "";
+
+  let statusHtml = "";
+  let cardClass  = "ticker-card";
+
+  if(status === "S1_FIRED"){
+    statusHtml = `<span class="t-status s-s1">🚨 S1 발생</span>`;
+    cardClass += " s1";
+  } else if(status === "ACTIVE"){
+    statusHtml = `<span class="t-status s-active">🟢 Candidate</span>`;
+    cardClass += " active";
+  } else {
+    statusHtml = `<span class="t-status s-none">— 없음</span>`;
+  }
+
+  const daysHtml = (status==="ACTIVE"||status==="S1_FIRED")
+    ? `<span class="t-days">${days}봉</span>`
+    : `<span style="color:#484f58">—</span>`;
+
+  return `
+  <div class="${cardClass}">
+    <div>
+      <div class="t-ticker">${ticker}</div>
+      <div class="t-name">${name}</div>
+    </div>
+    ${statusHtml}
+    ${daysHtml}
+    <span class="t-vpf ${vpfColor(vpf)}">${vpfStr}</span>
+    <span>${closePx}</span>
+    ${status!=="NONE"
+      ? `<a class="tv-btn" href="${tvUrl(ticker)}" target="_blank">TradingView →</a>`
+      : `<span style="color:#484f58;font-size:11px">해당없음</span>`}
+  </div>`;
+}
+
+async function loadData(){
+  try {
+    // 스캔 로그
+    const today = new Date();
+    today.setHours(today.getHours() + 9);
+    const dateStr = today.toISOString().slice(0,10);
+    const logDoc  = await getDoc(doc(db,"scan_log",dateStr));
+    if(logDoc.exists()){
+      const d = logDoc.data();
+      document.getElementById("scanTime").textContent =
+        d.scanned_at_kst || dateStr;
+    } else {
+      document.getElementById("scanTime").textContent = "오늘 스캔 없음";
+    }
+
+    // Candidates
+    const snap = await getDocs(collection(db,"candidates"));
+    const all  = [];
+    snap.forEach(d => all.push({ ticker: d.id, ...d.data() }));
+
+    const s1List  = all.filter(d => d.status==="S1_FIRED");
+    const actList = all.filter(d => d.status==="ACTIVE");
+    const noneList= all.filter(d => d.status==="NONE" || !d.status);
+
+    document.getElementById("totalCount").textContent    = all.length;
+    document.getElementById("candidateCount").textContent= actList.length + s1List.length;
+    document.getElementById("s1Count").textContent       = s1List.length;
+
+    if(s1List.length){
+      document.getElementById("s1Section").style.display="block";
+      document.getElementById("s1List").innerHTML = s1List.map(d=>makeCard(d.ticker,d)).join("");
+    }
+    if(actList.length){
+      document.getElementById("candidateList").innerHTML = actList.map(d=>makeCard(d.ticker,d)).join("");
+    } else {
+      document.getElementById("candidateList").innerHTML =
+        `<div class="no-candidate">현재 Candidate 없음</div>`;
+    }
+    document.getElementById("noneList").innerHTML = noneList.map(d=>makeCard(d.ticker,d)).join("");
+
+    document.getElementById("loadingBox").style.display = "none";
+    document.getElementById("mainContent").style.display = "block";
+
+  } catch(e){
+    document.getElementById("loadingBox").style.display = "none";
+    document.getElementById("errorBox").style.display   = "block";
+    document.getElementById("errorBox").textContent     = `로드 실패: ${e.message}`;
+    console.error(e);
+  }
+}
+
+loadData();
+</script>
+</body>
+</html>
