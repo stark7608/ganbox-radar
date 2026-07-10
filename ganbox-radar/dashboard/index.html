@@ -287,7 +287,14 @@ window.loadData = async () => {
     cData = {};
     snap.forEach(d => cData[d.id] = d.data());
     render();
-  } catch(e) { console.error(e); document.getElementById('headerSub').textContent='로드 실패'; }
+  } catch(e) {
+    console.error(e);
+    document.getElementById('headerSub').textContent='로드 실패 — Firebase 연결 확인';
+    document.getElementById('candList').innerHTML='<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-text">Firebase 연결 중 오류<br>잠시 후 새로고침 해주세요</div></div>';
+    document.getElementById('stTotal').textContent='0';
+    document.getElementById('stCand').textContent='0';
+    document.getElementById('stS1').textContent='0';
+  }
 };
 
 function card(ticker, d) {
@@ -326,7 +333,9 @@ function render() {
   document.getElementById('candList').innerHTML = ca.length
     ? ca.map(([t,d])=>card(t,d)).join('')
     : '<div class="empty"><div class="empty-icon">📡</div><div class="empty-text">현재 Candidate 없음<br>매일 06:30 스캔 결과를 확인하세요</div></div>';
-  document.getElementById('allList').innerHTML = no.map(([t,d])=>card(t,d)).join('');
+  document.getElementById('allList').innerHTML = no.length
+    ? no.map(([t,d])=>card(t,d)).join('')
+    : '<div class="empty"><div class="empty-icon">🛰</div><div class="empty-text">스캐너 실행 대기 중<br>매일 06:30 KST 자동 스캔</div></div>';
 }
 
 function renderWL() {
