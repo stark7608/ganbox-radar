@@ -18,6 +18,12 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: PIN 해시 주입
+        run: |
+          sed -i "s|__ADMIN_PIN_HASH__|${{ secrets.ADMIN_PIN_HASH }}|g" \
+            ganbox-radar/dashboard/index.html
+
       - uses: actions/configure-pages@v4
       - uses: actions/upload-pages-artifact@v3
         with:
