@@ -1,0 +1,65 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── 스캔 결과 (읽기 공개, 쓰기 차단) ─────────────────
+    match /candidates/{doc} {
+      allow read:  if true;
+      allow write: if false;   // 서비스 계정(스캐너)만 가능
+    }
+    match /scan_log/{doc} {
+      allow read:  if true;
+      allow write: if false;
+    }
+    match /usage_monthly/{doc} {
+      allow read:  if true;
+      allow write: if false;
+    }
+
+    // ── 이력 (읽기 공개, 쓰기 차단) ─────────────────────
+    match /history/{doc} {
+      allow read:  if true;
+      allow write: if false;
+    }
+
+    // ── 관리자 설정 (완전 차단 — PIN 해시는 HTML 빌드에 주입) ─
+    match /admin_config/{doc} {
+      allow read:  if false;
+      allow write: if false;
+    }
+
+    // ── 초대 코드 (읽기만 허용, 쓰기는 서비스 계정만) ───
+    match /valid_codes/{doc} {
+      allow read:  if true;
+      allow write: if false;
+    }
+
+    // ── FCM 토큰 (쓰기만 허용, 읽기 차단) ───────────────
+    match /fcm_tokens/{doc} {
+      allow write: if true;
+      allow read:  if false;
+    }
+
+    // ── 사용자 관심종목 (본인만 접근) ────────────────────
+    match /user_watchlist/{docId} {
+      // docId 형식: {userId}__{ticker}
+      allow read, write: if true;   // userId 검증은 앱 레벨
+    }
+
+    // ── 포지션 (본인만 접근) ─────────────────────────────
+    match /positions/{userId}/tickers/{ticker} {
+      allow read, write: if true;   // userId는 앱이 관리
+    }
+
+    // ── 차단 사용자 목록 (읽기만 허용) ──────────────────
+    match /blocked_users/{doc} {
+      allow read:  if true;
+      allow write: if false;
+    }
+
+    // ── 나머지 모든 문서 차단 ────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
