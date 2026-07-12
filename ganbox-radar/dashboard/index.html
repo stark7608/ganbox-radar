@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="GBR">
-<link rel="manifest" href="/manifest.json">
+<link rel="manifest" href="manifest.json">
 <title>GAN BOX Radar</title>
 <style>
 /* ── 리셋 ── */
@@ -842,33 +842,7 @@ async function checkAuth() {
   document.getElementById('inviteOverlay').classList.add('show');
 }
 
-window.submitInvite = async function() {
-  const code = document.getElementById('inviteInp').value.trim();
-  if (!code) return;
-  try {
-    const ref = doc(db, 'valid_codes', code);
-    const d   = await getDoc(ref);
-    if (!d.exists() || !d.data().is_active) {
-      document.getElementById('inviteErr').textContent = '유효하지 않은 코드입니다.';
-      return;
-    }
-    const data    = d.data();
-    const usedBy  = data.used_by || [];
-    const maxUses = data.max_uses || 10;
-    if (usedBy.length >= maxUses && !usedBy.includes(userId)) {
-      document.getElementById('inviteErr').textContent = '사용 한도를 초과한 코드입니다.';
-      return;
-    }
-    if (!usedBy.includes(userId)) {
-      await setDoc(ref, {used_by: [...usedBy, userId]}, {merge: true});
-    }
-    localStorage.setItem('gbr_auth', '1');
-    document.getElementById('inviteOverlay').classList.remove('show');
-    showApp();
-  } catch(e) {
-    document.getElementById('inviteErr').textContent = '오류가 발생했습니다. 다시 시도하세요.';
-  }
-};
+// submitInvite는 아래 잠금 버전으로 대체됨;
 
 function showApp() {
   document.getElementById('mainApp').style.display = 'flex';
@@ -1301,6 +1275,7 @@ async function verifyPin() {
 
 async function loadAdminData() {
   loadInviteCodes();
+  loadBlockedList();
   try {
     const kst    = new Date(); kst.setHours(kst.getHours()+9);
     const dateStr= kst.toISOString().slice(0,10);
@@ -1663,8 +1638,6 @@ function isInviteLocked() {
   return Date.now() < parseInt(localStorage.getItem(INVITE_LOCK_KEY)||'0');
 }
 
-// submitInvite에 잠금 로직 추가
-const _origSubmitInvite = window.submitInvite;
 window.submitInvite = async function() {
   if (isInviteLocked()) {
     const rem = Math.ceil((parseInt(localStorage.getItem(INVITE_LOCK_KEY))-Date.now())/60000);
@@ -1709,11 +1682,7 @@ window.submitInvite = async function() {
 };
 
 // ── loadAdminData에 차단 목록 로드 추가 ─────────────────
-const _origLoadAdmin = loadAdminData;
-async function loadAdminData() {
-  await _origLoadAdmin();
-  loadBlockedList();
-}
+// (loadAdminData 함수 내에 loadBlockedList 호출이 이미 포함됨)
 
 // ── 시작 ─────────────────────────────────────────────────
 checkAuth();
