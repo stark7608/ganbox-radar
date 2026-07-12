@@ -2,439 +2,1721 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#0d1117">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" id="themeColor" content="#111111">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="GBR">
 <link rel="manifest" href="/manifest.json">
-<link rel="apple-touch-icon" href="/icon-192.png">
 <title>GAN BOX Radar</title>
 <style>
+/* ── 리셋 ── */
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+
+/* ── CSS 변수 (라이트 기본) ── */
 :root{
-  --bg:#0d1117;--s1:#161b22;--s2:#21262d;--bd:#30363d;
-  --tx:#e6edf3;--mt:#8b949e;--dim:#484f58;
-  --g:#3fb950;--gl:rgba(63,185,80,.15);
-  --b:#58a6ff;--bl:rgba(88,166,255,.15);
-  --y:#d29922;--yl:rgba(210,153,34,.15);
-  --r:#f85149;--rl:rgba(248,81,73,.15);
-  --safe-top:env(safe-area-inset-top,0px);
+  --bg:#f7f7f7;--surface:#fff;--surface2:#f0f0f0;
+  --border:#d8d8d8;--border2:#e8e8e8;
+  --tx:#111;--tx2:#555;--tx3:#999;--tx4:#bbb;
+  --b:#1a5fd4;--b-bg:#edf2fd;--b-bd:#b0c8e8;
+  --g:#1a7a3a;--g-bg:#edf7f0;--g-bd:#a8d8b4;
+  --r:#b03020;--r-bg:#fdecea;--r-bd:#e8b4ae;
+  --y:#8b6000;--y-bg:#fdf8ed;--y-bd:#ddd0a0;
+  --dot:#111;--safe-top:env(safe-area-inset-top,0px);
   --safe-bot:env(safe-area-inset-bottom,0px);
+  --fs:14px; /* 글자 크기 기본값 */
 }
+.dark{
+  --bg:#0f0f0f;--surface:#1a1a1a;--surface2:#222;
+  --border:#2e2e2e;--border2:#252525;
+  --tx:#e8e8e8;--tx2:#aaa;--tx3:#666;--tx4:#444;
+  --b:#4a8fe0;--b-bg:#0a0f1d;--b-bd:#1a2a4a;
+  --g:#2ea050;--g-bg:#0d1d0d;--g-bd:#1a3a1a;
+  --r:#d04030;--r-bg:#2a1010;--r-bd:#5a1a1a;
+  --y:#c08000;--y-bg:#1d1800;--y-bd:#3a2a0a;
+  --dot:#e8e8e8;
+}
+
+/* ── 폰트 크기 단계 ── */
+.fs-sm{--fs:12px} .fs-lg{--fs:16px}
+
 html,body{height:100%;background:var(--bg);color:var(--tx);
   font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-  font-size:14px;line-height:1.5;overflow:hidden}
-.app{display:flex;flex-direction:column;height:100%;padding-top:var(--safe-top)}
-.header{background:#0f2040;border-bottom:1px solid #2a4060;padding:12px 16px;
-  display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-.header-left{display:flex;align-items:center;gap:10px}
-.radar-icon{font-size:20px;animation:pulse 2s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
-.header-title{font-size:17px;font-weight:700;color:var(--b)}
-.header-sub{font-size:11px;color:var(--dim)}
-.bell-btn{width:38px;height:38px;border-radius:50%;border:none;
-  background:rgba(255,255,255,.06);color:var(--mt);font-size:18px;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;position:relative}
-.bell-btn.on{background:var(--bl);color:var(--b)}
-.bell-dot{position:absolute;top:6px;right:6px;width:8px;height:8px;
-  background:var(--r);border-radius:50%;border:2px solid #0f2040;display:none}
-.bell-dot.show{display:block}
-.tabs{display:flex;background:var(--s1);border-bottom:1px solid var(--bd);flex-shrink:0}
-.tab{flex:1;padding:10px 0;text-align:center;font-size:12px;font-weight:600;
-  color:var(--mt);border:none;background:none;cursor:pointer;
-  border-bottom:2px solid transparent;transition:all .2s}
-.tab.active{color:var(--b);border-bottom-color:var(--b)}
+  font-size:var(--fs);line-height:1.5;overflow:hidden}
+
+/* ── 앱 레이아웃 ── */
+.app{display:flex;flex-direction:column;height:100%;
+  padding-top:var(--safe-top)}
+
+/* ── 헤더 ── */
+.hdr{padding:10px 14px 8px;border-bottom:1.5px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+  background:var(--surface)}
+.hdr-l{display:flex;align-items:center;gap:7px}
+.hdr-dot{width:6px;height:6px;border-radius:50%;background:var(--dot);
+  flex-shrink:0;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.hdr-title{font-size:1em;font-weight:700;color:var(--tx)}
+.hdr-sub{font-size:.7em;color:var(--tx3);margin-top:1px}
+.hdr-r{display:flex;align-items:center;gap:7px}
+.hdr-btn{width:28px;height:28px;border:1.5px solid var(--border);
+  border-radius:6px;background:transparent;color:var(--tx3);
+  font-size:.85em;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.hdr-btn.active{background:var(--b-bg);border-color:var(--b-bd);color:var(--b)}
+
+/* ── 스캔바 ── */
+.sbar{padding:4px 14px;display:flex;justify-content:space-between;
+  align-items:center;background:var(--surface2);
+  border-bottom:1.5px solid var(--border);flex-shrink:0;
+  font-size:.72em}
+.sbar-time{color:var(--tx2)}
+.sbar-time b{color:var(--tx);font-weight:600}
+.sbar-warn{color:var(--r);font-weight:600}
+.sbar-ref{color:var(--b);cursor:pointer;background:none;border:none;
+  font-size:inherit;padding:2px 4px}
+
+/* ── 스탯 ── */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);
+  border-bottom:1.5px solid var(--border);flex-shrink:0}
+.stat{background:var(--surface);padding:6px 4px;text-align:center;
+  border-right:1.5px solid var(--border)}
+.stat:last-child{border-right:none}
+.stat-n{font-size:1.3em;font-weight:700;font-variant-numeric:tabular-nums}
+.stat-l{font-size:.65em;color:var(--tx4);margin-top:1px}
+.cn-b{color:var(--b)}.cn-g{color:var(--g)}.cn-r{color:var(--r)}.cn-y{color:var(--y)}
+
+/* ── 콘텐츠 영역 ── */
 .content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
-.page{display:none;padding:12px}
+.page{display:none;padding:10px}
 .page.active{display:block}
-.scan-bar{background:var(--s2);border-radius:8px;padding:8px 12px;
-  display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-.scan-time{color:var(--g);font-weight:600;font-size:12px}
-.refresh-btn{font-size:11px;color:var(--b);border:none;background:none;cursor:pointer;padding:4px 8px}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
-.stat{background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:12px 8px;text-align:center}
-.stat-val{font-size:24px;font-weight:700;font-family:monospace}
-.stat-val.blue{color:var(--b)}.stat-val.green{color:var(--g)}.stat-val.red{color:var(--r)}
-.stat-label{font-size:10px;color:var(--mt);margin-top:3px}
-.sec-title{font-size:11px;font-weight:700;color:var(--mt);
-  letter-spacing:.1em;text-transform:uppercase;margin:14px 0 8px}
-.ticker-card{background:var(--s1);border:1px solid var(--bd);border-radius:10px;
-  padding:12px 14px;margin-bottom:8px}
-.ticker-card.candidate{border-color:rgba(63,185,80,.5);background:#0a1a0a}
-.ticker-card.s1{border-color:var(--r);background:#1a0505}
-.tc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
-.tc-ticker{font-size:16px;font-weight:700;color:#fff;font-family:monospace}
-.tc-name{font-size:11px;color:var(--mt)}
-.tc-status{font-size:12px;font-weight:700;padding:3px 8px;border-radius:4px}
-.st-c{background:var(--gl);color:var(--g)}
-.st-s1{background:var(--rl);color:var(--r)}
-.st-n{background:var(--s2);color:var(--dim)}
-.tc-bottom{display:flex;align-items:center;justify-content:space-between}
-.tc-meta{display:flex;gap:12px;font-size:11px;color:var(--mt)}
-.vpf-n{color:var(--r)}.vpf-p{color:var(--g)}.vpf-0{color:var(--mt)}
-.tc-days{font-size:12px;font-weight:600;color:var(--y)}
-.tv-link{font-size:11px;color:var(--b);text-decoration:none;
-  background:var(--bl);border:1px solid rgba(88,166,255,.3);
-  border-radius:4px;padding:3px 8px;white-space:nowrap}
-.empty{text-align:center;padding:32px 16px;color:var(--mt)}
-.empty-icon{font-size:36px;margin-bottom:10px}
-.empty-text{font-size:13px;line-height:1.6}
-.add-form{background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:14px;margin-bottom:14px}
-.add-form-title{font-size:13px;font-weight:600;margin-bottom:10px}
-.add-row{display:flex;gap:8px}
-.ticker-input{flex:1;background:var(--s2);border:1px solid var(--bd);border-radius:8px;
-  padding:10px 12px;color:var(--tx);font-size:14px;font-family:monospace;
-  text-transform:uppercase;outline:none}
-.ticker-input:focus{border-color:var(--b)}
-.add-btn{background:var(--b);border:none;border-radius:8px;padding:10px 16px;
-  color:#fff;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap}
-.wl-item{background:var(--s1);border:1px solid var(--bd);border-radius:10px;
-  padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
-.wl-ticker{font-size:15px;font-weight:700;font-family:monospace;color:#fff}
-.wl-name{font-size:11px;color:var(--mt)}
-.wl-st{font-size:11px;font-weight:600;padding:2px 7px;border-radius:4px}
-.del-btn{width:30px;height:30px;border-radius:50%;border:1px solid var(--bd);
-  background:transparent;color:var(--mt);font-size:16px;cursor:pointer;
+
+/* ── 섹션 타이틀 ── */
+.sec{font-size:.68em;font-weight:700;letter-spacing:.07em;
+  text-transform:uppercase;color:var(--tx4);
+  padding:8px 2px 4px;flex-shrink:0}
+
+/* ── 카드 ── */
+.card{border-radius:8px;padding:8px 10px;margin-bottom:5px;
+  border:1.5px solid var(--border);background:var(--surface)}
+.card.s1{border-left:3px solid var(--r);border-color:var(--r-bd);background:var(--r-bg)}
+.card.s3{border-left:3px solid var(--b);border-color:var(--b-bd);background:var(--b-bg)}
+.card.cand{border-left:3px solid var(--g);border-color:var(--g-bd);background:var(--g-bg)}
+.card.watch{border-left:3px solid var(--y);border-color:var(--y-bd);background:var(--y-bg)}
+.card.warm{border-left:3px solid var(--b);border-color:var(--b-bd)}
+.card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px}
+.card-tk{font-size:1em;font-weight:700;font-family:monospace;color:var(--tx)}
+.card-nm{font-size:.7em;color:var(--tx3);margin-top:1px}
+.card-r{display:flex;align-items:center;gap:5px}
+.card-days{font-size:.72em;color:var(--y);font-weight:600}
+.card-bot{display:flex;justify-content:space-between;align-items:center}
+.card-meta{display:flex;gap:8px;font-size:.72em;color:var(--tx3)}
+.card-meta b{font-weight:600}
+.vpfn{color:var(--r)}.vpfp{color:var(--g)}
+.tv-btn{font-size:.7em;color:var(--b);text-decoration:none;
+  background:var(--b-bg);border:1px solid var(--b-bd);
+  border-radius:4px;padding:2px 7px;white-space:nowrap}
+
+/* ── 뱃지 ── */
+.badge{font-size:.65em;font-weight:700;padding:2px 5px;border-radius:3px}
+.bg-s1{color:var(--r);background:var(--r-bg)}
+.bg-s3{color:var(--b);background:var(--b-bg)}
+.bg-c{color:var(--g);background:var(--g-bg)}
+.bg-w{color:var(--y);background:var(--y-bg)}
+.bg-wm{color:var(--b);background:var(--b-bg)}
+.bg-n{color:var(--tx4);background:var(--surface2)}
+
+/* ── 히트맵 ── */
+.hm-wrap{background:var(--surface);border:1.5px solid var(--border);
+  border-radius:8px;padding:8px;margin-bottom:8px}
+.hm-title{font-size:.75em;font-weight:600;color:var(--tx2);margin-bottom:6px}
+.hm-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:3px}
+.hmc{border-radius:4px;padding:4px 2px;text-align:center;
+  border:1.5px solid}
+.hmc-tk{font-size:.6em;font-weight:700;font-family:monospace}
+.hmc-v{font-size:.58em;margin-top:1px}
+.hm-s{background:var(--r-bg);border-color:var(--r-bd)}
+.hm-s .hmc-tk,.hm-s .hmc-v{color:var(--r)}
+.hm-c{background:var(--g-bg);border-color:var(--g-bd)}
+.hm-c .hmc-tk,.hm-c .hmc-v{color:var(--g)}
+.hm-w{background:var(--y-bg);border-color:var(--y-bd)}
+.hm-w .hmc-tk,.hm-w .hmc-v{color:var(--y)}
+.hm-wm{background:var(--b-bg);border-color:var(--b-bd)}
+.hm-wm .hmc-tk,.hm-wm .hmc-v{color:var(--b)}
+.hm-n{background:var(--surface2);border-color:var(--border)}
+.hm-n .hmc-tk{color:var(--tx3)}.hm-n .hmc-v{color:var(--tx4)}
+
+/* ── 온도계 ── */
+.thermo{background:var(--surface);border:1.5px solid var(--border);
+  border-radius:8px;padding:8px 10px;margin-bottom:6px}
+.thermo-row{display:flex;justify-content:space-between;
+  align-items:center;margin-bottom:5px}
+.thermo-lbl{font-size:.72em;color:var(--tx3)}
+.thermo-val{font-size:.78em;font-weight:700;color:var(--b)}
+.thermo-track{height:5px;border-radius:3px;
+  background:linear-gradient(to right,var(--b),var(--g),var(--y),var(--r));
+  position:relative}
+.thermo-ptr{position:absolute;top:-4px;width:2px;height:13px;
+  background:var(--tx);border-radius:1px}
+
+/* ── 섹터바 ── */
+.sector-bar{background:var(--surface);border:1.5px solid var(--border);
+  border-radius:6px;padding:6px 10px;margin-bottom:4px;
+  display:flex;justify-content:space-between;align-items:center}
+.sector-lbl{font-size:.75em;color:var(--tx2)}
+.sector-val{font-size:.8em;font-weight:700}
+
+/* ── 이력 ── */
+.hist{background:var(--surface);border:1.5px solid var(--border);
+  border-radius:7px;padding:7px 10px;margin-bottom:4px}
+.hist-top{display:flex;justify-content:space-between;margin-bottom:2px}
+.hist-tk{font-size:.9em;font-weight:700;font-family:monospace;color:var(--tx)}
+.hist-out{font-size:.72em;font-weight:600}
+.ho-s1,.ho-s3{color:var(--g)}
+.ho-exp{color:var(--tx4)}
+.ho-ema{color:var(--y)}
+.hist-meta{font-size:.65em;color:var(--tx4);display:flex;gap:8px}
+.hist-stats{display:grid;grid-template-columns:repeat(3,1fr);
+  gap:4px;margin-bottom:8px}
+.hs-box{background:var(--surface);border:1.5px solid var(--border);
+  border-radius:7px;padding:6px 4px;text-align:center}
+.hs-n{font-size:1.15em;font-weight:700}
+.hs-l{font-size:.65em;color:var(--tx4);margin-top:1px}
+
+/* ── 관심종목 ── */
+.add-box{background:var(--surface);border:1.5px solid var(--border);
+  border-radius:8px;padding:8px 10px;margin-bottom:8px}
+.add-lbl{font-size:.68em;font-weight:700;text-transform:uppercase;
+  letter-spacing:.06em;color:var(--tx4);margin-bottom:5px}
+.add-row{display:flex;gap:5px}
+.add-inp{flex:1;background:var(--surface2);border:1.5px solid var(--border);
+  border-radius:6px;padding:7px 9px;font-size:.85em;
+  font-family:monospace;color:var(--tx);outline:none;text-transform:uppercase}
+.add-inp:focus{border-color:var(--b)}
+.add-btn{background:var(--tx);border:none;border-radius:6px;
+  padding:7px 12px;color:var(--bg);font-size:.82em;font-weight:700;cursor:pointer}
+.wl-item{background:var(--surface);border:1.5px solid var(--border);
+  border-radius:7px;padding:6px 10px;margin-bottom:4px;
+  display:flex;justify-content:space-between;align-items:center}
+.wl-tk{font-size:.9em;font-weight:700;font-family:monospace;color:var(--tx)}
+.wl-nm{font-size:.68em;color:var(--tx3)}
+.wl-r{display:flex;align-items:center;gap:5px}
+.wl-pos{font-size:.65em;color:var(--tx3);cursor:pointer;
+  border:1px solid var(--border);border-radius:3px;padding:1px 5px}
+.del-btn{width:20px;height:20px;border-radius:4px;
+  border:1.5px solid var(--border);background:transparent;
+  color:var(--tx4);font-size:.85em;cursor:pointer;
   display:flex;align-items:center;justify-content:center}
-.set-section{background:var(--s1);border:1px solid var(--bd);border-radius:10px;overflow:hidden;margin-bottom:14px}
-.set-item{padding:14px 16px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between}
-.set-item:last-child{border-bottom:none}
-.set-label{font-size:14px;color:var(--tx)}
-.set-desc{font-size:11px;color:var(--mt)}
-.toggle{position:relative;width:48px;height:28px;flex-shrink:0}
-.toggle input{opacity:0;width:0;height:0}
-.slider{position:absolute;inset:0;background:var(--s2);border-radius:14px;
-  transition:.3s;cursor:pointer;border:1px solid var(--bd)}
-.slider::before{content:'';position:absolute;width:20px;height:20px;
-  left:3px;top:3px;background:var(--mt);border-radius:50%;transition:.3s}
-.toggle input:checked+.slider{background:var(--b);border-color:var(--b)}
-.toggle input:checked+.slider::before{transform:translateX(20px);background:#fff}
-.set-btn{background:var(--bl);border:none;border-radius:8px;padding:7px 14px;color:var(--b);font-size:13px;cursor:pointer}
-.ver{text-align:center;font-size:11px;color:var(--dim);padding:8px}
-.install-banner{background:var(--bl);border:1px solid rgba(88,166,255,.3);
-  border-radius:10px;padding:12px 14px;margin-bottom:12px;
-  display:flex;align-items:center;justify-content:space-between;gap:12px}
-.install-text{font-size:12px;color:var(--tx);line-height:1.5}
-.install-btn{background:var(--b);border:none;border-radius:6px;
-  padding:7px 12px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
+
+/* ── 포지션 입력 모달 ── */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.5);
+  z-index:100;display:none;align-items:flex-end;
+  justify-content:center}
+.modal.show{display:flex}
+.modal-box{background:var(--surface);border-radius:16px 16px 0 0;
+  padding:20px 16px;width:100%;max-width:480px;
+  padding-bottom:calc(20px + var(--safe-bot))}
+.modal-title{font-size:1em;font-weight:700;margin-bottom:14px;
+  display:flex;justify-content:space-between;align-items:center}
+.modal-close{font-size:1.2em;cursor:pointer;color:var(--tx3)}
+.inp-grp{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.inp-row{display:flex;flex-direction:column;gap:3px}
+.inp-lbl{font-size:.72em;color:var(--tx3);font-weight:600}
+.inp{background:var(--surface2);border:1.5px solid var(--border);
+  border-radius:7px;padding:9px 11px;font-size:.9em;
+  color:var(--tx);outline:none;width:100%}
+.inp:focus{border-color:var(--b)}
+.modal-btn{width:100%;background:var(--tx);border:none;
+  border-radius:8px;padding:12px;color:var(--bg);
+  font-size:.9em;font-weight:700;cursor:pointer}
+
+/* ── 설정 ── */
+.set-g{background:var(--surface);border:1.5px solid var(--border);
+  border-radius:8px;overflow:hidden;margin-bottom:8px}
+.set-r{padding:9px 12px;display:flex;justify-content:space-between;
+  align-items:center;border-bottom:1px solid var(--border2)}
+.set-r:last-child{border-bottom:none}
+.set-la{font-size:.85em;font-weight:600;color:var(--tx)}
+.set-de{font-size:.68em;color:var(--tx4);margin-top:1px}
+.set-val{font-size:.78em;color:var(--tx3)}
+.set-val.ok{color:var(--g);font-weight:600}
+.tog{width:36px;height:20px;border-radius:10px;position:relative;
+  cursor:pointer;flex-shrink:0;transition:background .25s}
+.tog.on{background:var(--tx)}
+.tog.off{background:var(--border)}
+.tog::after{content:'';position:absolute;top:2px;width:16px;height:16px;
+  border-radius:50%;background:#fff;transition:left .25s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.tog.on::after{left:18px}
+.tog.off::after{left:2px}
+.mode-grp{display:flex;gap:3px}
+.mode-btn{font-size:.72em;padding:3px 7px;border-radius:4px;
+  font-weight:600;cursor:pointer;border:1.5px solid var(--border);
+  background:transparent;color:var(--tx3)}
+.mode-btn.on{background:var(--tx);color:var(--bg);border-color:var(--tx)}
+.fs-grp{display:flex;gap:3px}
+.fs-btn{font-size:.68em;padding:3px 6px;border-radius:4px;
+  cursor:pointer;border:1.5px solid var(--border);
+  background:transparent;color:var(--tx3)}
+.fs-btn.on{background:var(--tx);color:var(--bg);border-color:var(--tx)}
+.set-version{text-align:center;font-size:.68em;color:var(--tx4);
+  padding:8px}
+.info-btn{font-size:.7em;color:var(--tx4);cursor:pointer;
+  border:1px solid var(--border);border-radius:50%;
+  width:14px;height:14px;display:inline-flex;align-items:center;
+  justify-content:center;line-height:1;flex-shrink:0}
+.info-popup{position:fixed;inset:0;background:rgba(0,0,0,.4);
+  z-index:50;display:none;align-items:center;justify-content:center;padding:20px}
+.info-box{background:var(--surface);border:1.5px solid var(--border);
+  border-radius:12px;padding:16px;max-width:320px;width:100%}
+.info-title{font-size:.95em;font-weight:700;color:var(--tx);margin-bottom:8px}
+.info-body{font-size:.8em;color:var(--tx2);line-height:1.7}
+.info-stat{display:flex;gap:12px;margin-top:10px;padding-top:8px;
+  border-top:1px solid var(--border2)}
+.info-stat-item{text-align:center;flex:1}
+.info-stat-val{font-size:1em;font-weight:700;color:var(--b)}
+.info-stat-lbl{font-size:.65em;color:var(--tx4);margin-top:2px}
+.invite-lock{font-size:.78em;color:var(--r);margin-top:6px;text-align:center}
+/* 초대 코드 카드 */
+.code-card{background:var(--surface);border:1.5px solid var(--border);
+  border-radius:7px;padding:8px 10px;margin-bottom:4px}
+.code-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px}
+.code-val{font-family:monospace;font-size:.9em;font-weight:700;
+  color:var(--tx);letter-spacing:.08em}
+.code-active{color:var(--g);font-size:.68em;font-weight:600}
+.code-inactive{color:var(--r);font-size:.68em;font-weight:600}
+.code-meta{font-size:.68em;color:var(--tx4);display:flex;gap:8px}
+.code-actions{display:flex;gap:4px;margin-top:5px}
+.code-btn{flex:1;font-size:.7em;padding:4px;border-radius:5px;
+  cursor:pointer;border:1.5px solid var(--border);
+  background:transparent;color:var(--tx3)}
+.code-btn.copy{color:var(--b);border-color:var(--b-bd);background:var(--b-bg)}
+.code-btn.off{color:var(--r);border-color:var(--r-bd)}
+.code-btn.del{color:var(--tx4)}
+
+/* ── 관리자 패널 ── */
+.admin-link{font-size:.7em;color:var(--tx4);text-align:center;
+  padding:4px 0;cursor:pointer;margin-top:4px}
+.usage-card{background:var(--surface);border:1.5px solid var(--border);
+  border-radius:8px;padding:10px 12px;margin-bottom:6px}
+.usage-title{font-size:.75em;font-weight:700;color:var(--tx2);
+  margin-bottom:6px;display:flex;justify-content:space-between}
+.usage-pct{font-size:.72em;font-weight:700}
+.pct-ok{color:var(--g)}.pct-warn{color:var(--y)}.pct-danger{color:var(--r)}
+.usage-bar{height:5px;border-radius:3px;background:var(--surface2);
+  margin:4px 0 5px}
+.usage-fill{height:100%;border-radius:3px;transition:width .3s}
+.fill-ok{background:var(--g)}.fill-warn{background:var(--y)}.fill-danger{background:var(--r)}
+.usage-detail{display:flex;justify-content:space-between;
+  font-size:.68em;color:var(--tx4)}
+.admin-ctrl-btn{width:100%;background:var(--surface2);
+  border:1.5px solid var(--border);border-radius:7px;
+  padding:9px;color:var(--tx2);font-size:.82em;
+  font-weight:600;cursor:pointer;margin-bottom:4px}
+.admin-ctrl-btn.danger{color:var(--r);border-color:var(--r-bd)}
+
+/* ── PIN 입력 화면 ── */
+.pin-overlay{position:fixed;inset:0;background:var(--bg);
+  z-index:200;display:none;flex-direction:column;
+  align-items:center;justify-content:center;padding:24px}
+.pin-overlay.show{display:flex}
+.pin-title{font-size:1.1em;font-weight:700;margin-bottom:6px;color:var(--tx)}
+.pin-sub{font-size:.78em;color:var(--tx3);margin-bottom:20px}
+.pin-dots{display:flex;gap:10px;margin-bottom:20px}
+.pin-dot{width:12px;height:12px;border-radius:50%;
+  border:2px solid var(--border)}
+.pin-dot.fill{background:var(--tx);border-color:var(--tx)}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);
+  gap:8px;width:220px}
+.pin-key{background:var(--surface);border:1.5px solid var(--border);
+  border-radius:10px;padding:14px;text-align:center;
+  font-size:1.1em;font-weight:600;cursor:pointer;
+  color:var(--tx);active:opacity:.7}
+.pin-key.del{font-size:.85em;color:var(--tx3)}
+.pin-err{font-size:.78em;color:var(--r);margin-top:8px;
+  text-align:center;min-height:20px}
+
+/* ── 초대 코드 화면 ── */
+.invite-overlay{position:fixed;inset:0;background:var(--bg);
+  z-index:300;display:none;flex-direction:column;
+  align-items:center;justify-content:center;padding:24px}
+.invite-overlay.show{display:flex}
+.invite-logo{font-size:2.5em;margin-bottom:12px}
+.invite-title{font-size:1.2em;font-weight:700;color:var(--tx);margin-bottom:6px}
+.invite-sub{font-size:.8em;color:var(--tx3);margin-bottom:24px;text-align:center}
+.invite-inp{background:var(--surface);border:1.5px solid var(--border);
+  border-radius:10px;padding:12px 16px;font-size:1.1em;
+  font-family:monospace;color:var(--tx);outline:none;
+  text-align:center;width:100%;max-width:280px;
+  letter-spacing:.15em;text-transform:uppercase;margin-bottom:10px}
+.invite-inp:focus{border-color:var(--b)}
+.invite-btn{width:100%;max-width:280px;background:var(--tx);
+  border:none;border-radius:10px;padding:13px;
+  color:var(--bg);font-size:.95em;font-weight:700;cursor:pointer}
+.invite-err{font-size:.78em;color:var(--r);margin-top:6px;
+  text-align:center;min-height:18px}
+
+/* ── 온보딩 배너 ── */
+.onboard-banner{background:var(--b-bg);border:1.5px solid var(--b-bd);
+  border-radius:8px;padding:10px 12px;margin-bottom:8px;
+  display:flex;align-items:center;justify-content:space-between;gap:10px}
+.ob-text{font-size:.78em;color:var(--tx);line-height:1.5}
+.ob-btn{background:var(--b);border:none;border-radius:6px;
+  padding:6px 10px;color:#fff;font-size:.75em;font-weight:700;
+  cursor:pointer;white-space:nowrap;flex-shrink:0}
+
+/* ── 바텀 네비 ── */
+.bnav{border-top:1.5px solid var(--border);display:flex;
+  background:var(--surface);
+  padding-bottom:var(--safe-bot);flex-shrink:0}
+.ni{flex:1;display:flex;flex-direction:column;align-items:center;
+  gap:2px;padding:6px 0 5px;cursor:pointer;border:none;background:none}
+.ni-i{font-size:1.1em;line-height:1.2}
+.ni-l{font-size:.62em;color:var(--tx4)}
+.ni.on .ni-l{color:var(--tx);font-weight:700}
+
+/* ── 빈 상태 ── */
+.empty{text-align:center;padding:32px 16px;color:var(--tx3)}
+.empty-i{font-size:2em;margin-bottom:8px}
+.empty-t{font-size:.85em;line-height:1.6}
+
+/* ── 토스트 ── */
 .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
-  background:#30363d;color:#fff;padding:10px 18px;border-radius:20px;
-  font-size:13px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;
-  white-space:nowrap;max-width:90vw}
+  background:var(--surface2);border:1px solid var(--border);
+  color:var(--tx);padding:9px 16px;border-radius:20px;
+  font-size:.8em;z-index:999;opacity:0;transition:opacity .25s;
+  pointer-events:none;white-space:nowrap;max-width:88vw}
 .toast.show{opacity:1}
-.loading{display:flex;align-items:center;justify-content:center;
-  padding:40px;color:var(--b);font-size:13px;gap:10px}
-.spin{width:20px;height:20px;border:2px solid var(--bd);
-  border-top-color:var(--b);border-radius:50%;animation:sp .8s linear infinite}
+
+/* ── 스피너 ── */
+.spin{display:flex;align-items:center;justify-content:center;
+  padding:32px;font-size:.85em;color:var(--tx3);gap:8px}
+.spin-i{width:18px;height:18px;border:2px solid var(--border);
+  border-top-color:var(--b);border-radius:50%;
+  animation:sp .8s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
-<div class="app">
-  <div class="header">
-    <div class="header-left">
-      <span class="radar-icon">🛰</span>
-      <div>
-        <div class="header-title">GAN BOX Radar</div>
-        <div class="header-sub" id="headerSub">로딩 중...</div>
-      </div>
-    </div>
-    <button class="bell-btn" id="bellBtn" onclick="toggleNoti()">
-      🔔<span class="bell-dot" id="bellDot"></span>
-    </button>
+
+<!-- 초대 코드 화면 -->
+<div class="invite-overlay" id="inviteOverlay">
+  <div class="invite-logo">🛰</div>
+  <div class="invite-title">GAN BOX Radar</div>
+  <div class="invite-sub">초대 코드를 입력하세요.<br>최초 1회만 필요합니다.</div>
+  <input class="invite-inp" id="inviteInp" type="text"
+    placeholder="XXXXXX" maxlength="10" autocomplete="off"
+    oninput="this.value=this.value.toUpperCase()"
+    onkeydown="if(event.key==='Enter')submitInvite()">
+  <button class="invite-btn" onclick="submitInvite()">확인</button>
+  <div class="invite-err" id="inviteErr"></div>
+</div>
+
+<!-- PIN 입력 화면 -->
+<div class="pin-overlay" id="pinOverlay">
+  <div class="pin-title">관리자 인증</div>
+  <div class="pin-sub">PIN을 입력하세요</div>
+  <div class="pin-dots" id="pinDots">
+    <div class="pin-dot" id="pd0"></div>
+    <div class="pin-dot" id="pd1"></div>
+    <div class="pin-dot" id="pd2"></div>
+    <div class="pin-dot" id="pd3"></div>
+    <div class="pin-dot" id="pd4"></div>
+    <div class="pin-dot" id="pd5"></div>
   </div>
-
-  <div class="tabs">
-    <button class="tab active" onclick="showPage('radar',this)">📡 레이더</button>
-    <button class="tab" onclick="showPage('watchlist',this)">⭐ 관심종목</button>
-    <button class="tab" onclick="showPage('settings',this)">⚙️ 설정</button>
+  <div class="pin-pad">
+    <button class="pin-key" onclick="pinKey('1')">1</button>
+    <button class="pin-key" onclick="pinKey('2')">2</button>
+    <button class="pin-key" onclick="pinKey('3')">3</button>
+    <button class="pin-key" onclick="pinKey('4')">4</button>
+    <button class="pin-key" onclick="pinKey('5')">5</button>
+    <button class="pin-key" onclick="pinKey('6')">6</button>
+    <button class="pin-key" onclick="pinKey('7')">7</button>
+    <button class="pin-key" onclick="pinKey('8')">8</button>
+    <button class="pin-key" onclick="pinKey('9')">9</button>
+    <button class="pin-key" onclick="pinCancel()">취소</button>
+    <button class="pin-key" onclick="pinKey('0')">0</button>
+    <button class="pin-key del" onclick="pinDel()">⌫</button>
   </div>
+  <div class="pin-err" id="pinErr"></div>
+</div>
 
-  <div class="content">
-    <!-- 레이더 -->
-    <div class="page active" id="page-radar">
-      <div class="install-banner" id="installBanner" style="display:none">
-        <div class="install-text">📱 홈 화면에 추가하면 앱처럼 사용할 수 있어요</div>
-        <button class="install-btn" id="installBtn1">설치</button>
-      </div>
-      <div class="scan-bar">
-        <div class="scan-time" id="scanTime">스캔 정보 로딩 중...</div>
-        <button class="refresh-btn" onclick="loadData()">↻ 새로고침</button>
-      </div>
-      <div class="stats">
-        <div class="stat"><div class="stat-val blue" id="stTotal">—</div><div class="stat-label">감시종목</div></div>
-        <div class="stat"><div class="stat-val green" id="stCand">—</div><div class="stat-label">Candidate</div></div>
-        <div class="stat"><div class="stat-val red" id="stS1">—</div><div class="stat-label">S1 신호</div></div>
-      </div>
-      <div id="s1Section" style="display:none">
-        <div class="sec-title">🚨 S1 신호 발생</div>
-        <div id="s1List"></div>
-      </div>
-      <div class="sec-title">🟢 Candidate 종목</div>
-      <div id="candList"><div class="loading"><div class="spin"></div>로딩 중...</div></div>
-      <div class="sec-title">⚪ 전체 감시 현황</div>
-      <div id="allList"></div>
+<!-- 포지션 입력 모달 -->
+<div class="modal" id="posModal">
+  <div class="modal-box">
+    <div class="modal-title">
+      <span id="posModalTitle">포지션 등록</span>
+      <span class="modal-close" onclick="closeModal()">×</span>
     </div>
-
-    <!-- 관심종목 -->
-    <div class="page" id="page-watchlist">
-      <div class="add-form">
-        <div class="add-form-title">종목 추가</div>
-        <div class="add-row">
-          <input class="ticker-input" id="tickerInput" type="text"
-            placeholder="티커 입력 (예: TQQQ)" maxlength="10" autocomplete="off"
-            oninput="this.value=this.value.toUpperCase()"
-            onkeydown="if(event.key==='Enter')addTicker()">
-          <button class="add-btn" onclick="addTicker()">추가</button>
-        </div>
+    <div class="inp-grp">
+      <div class="inp-row">
+        <label class="inp-lbl">진입가 ($)</label>
+        <input class="inp" id="posEntry" type="number" step="0.01" placeholder="74.95">
       </div>
-      <div class="sec-title">내 관심 종목 (<span id="wlCount">0</span>)</div>
-      <div id="wlItems"></div>
+      <div class="inp-row">
+        <label class="inp-lbl">목표가 TP ($)</label>
+        <input class="inp" id="posTp" type="number" step="0.01" placeholder="89.50">
+      </div>
+      <div class="inp-row">
+        <label class="inp-lbl">손절가 SL ($)</label>
+        <input class="inp" id="posSl" type="number" step="0.01" placeholder="68.20">
+      </div>
     </div>
-
-    <!-- 설정 -->
-    <div class="page" id="page-settings">
-      <div class="set-section">
-        <div class="set-item">
-          <div><div class="set-label">푸시 알림</div><div class="set-desc">Candidate/S1 신호 알림 수신</div></div>
-          <label class="toggle"><input type="checkbox" id="notiTog" onchange="handleNotiToggle(this)"><span class="slider"></span></label>
-        </div>
-        <div class="set-item">
-          <div><div class="set-label">S1 신호만 알림</div><div class="set-desc">Candidate 등록은 제외</div></div>
-          <label class="toggle"><input type="checkbox" id="s1OnlyTog" onchange="localStorage.setItem('s1Only',this.checked)"><span class="slider"></span></label>
-        </div>
-      </div>
-      <div class="set-section">
-        <div class="set-item">
-          <div><div class="set-label">스캔 시간</div><div class="set-desc">매일 자동 실행</div></div>
-          <span style="font-size:12px;color:var(--mt)">06:30 KST</span>
-        </div>
-        <div class="set-item">
-          <div><div class="set-label">Candidate 유효기간</div><div class="set-desc">20봉 초과 시 자동 해제</div></div>
-          <span style="font-size:12px;color:var(--mt)">20봉</span>
-        </div>
-        <div class="set-item">
-          <div><div class="set-label">백테스트 전환율</div><div class="set-desc">TQQQ 2010~2026</div></div>
-          <span style="font-size:12px;color:var(--g)">66.7%</span>
-        </div>
-      </div>
-      <div class="set-section">
-        <div class="set-item">
-          <div><div class="set-label">캐시 초기화</div><div class="set-desc">앱 데이터 초기화</div></div>
-          <button class="set-btn" onclick="clearCache()">초기화</button>
-        </div>
-        <div class="set-item">
-          <div><div class="set-label">홈 화면에 추가</div><div class="set-desc">앱처럼 설치하기</div></div>
-          <button class="set-btn" id="installBtn2">설치</button>
-        </div>
-      </div>
-      <div class="ver">GAN BOX Radar v1.0 · Phase 3</div>
-    </div>
+    <button class="modal-btn" onclick="savePosition()">등록</button>
   </div>
 </div>
+
+<!-- 메인 앱 -->
+<div class="app" id="mainApp" style="display:none">
+  <!-- 헤더 -->
+  <div class="hdr">
+    <div class="hdr-l">
+      <div class="hdr-dot"></div>
+      <div>
+        <div class="hdr-title">GAN BOX Radar</div>
+        <div class="hdr-sub" id="hdrSub">로딩 중...</div>
+      </div>
+    </div>
+    <div class="hdr-r">
+      <button class="hdr-btn" id="modeBtn" onclick="toggleMode()" title="다크/라이트">●</button>
+      <button class="hdr-btn" id="bellBtn" onclick="toggleNoti()" title="알림">🔔</button>
+    </div>
+  </div>
+
+  <!-- 스캔바 -->
+  <div class="sbar">
+    <span class="sbar-time">스캔 <b id="scanTime">--</b></span>
+    <span id="scanWarn" class="sbar-warn" style="display:none">⚠️ 데이터 오래됨</span>
+    <button class="sbar-ref" onclick="loadData()">↻</button>
+  </div>
+
+  <!-- 스탯 -->
+  <div class="stats">
+    <div class="stat"><div class="stat-n cn-b" id="stTotal">—</div><div class="stat-l">감시</div></div>
+    <div class="stat"><div class="stat-n cn-r" id="stS1">—</div><div class="stat-l">S1</div></div>
+    <div class="stat"><div class="stat-n cn-b" id="stS3">—</div><div class="stat-l">S3</div></div>
+    <div class="stat"><div class="stat-n cn-g" id="stCand">—</div><div class="stat-l">후보</div></div>
+  </div>
+
+  <!-- 콘텐츠 -->
+  <div class="content">
+
+    <!-- 레이더 탭 -->
+    <div class="page active" id="page-radar">
+      <div class="onboard-banner" id="notiPrompt" style="display:none">
+        <div class="ob-text">📱 S1 신호를 알림으로 받아보세요</div>
+        <button class="ob-btn" onclick="requestNoti()">알림 설정</button>
+      </div>
+      <div id="s1Sec" style="display:none">
+        <div class="sec" style="color:var(--r);display:flex;align-items:center;gap:5px">
+          S1 신호 <span class="info-btn" onclick="showInfo('s1')">ⓘ</span></div>
+        <div id="s1List"></div>
+      </div>
+      <div id="s3Sec" style="display:none">
+        <div class="sec" style="color:var(--b);display:flex;align-items:center;gap:5px">
+          S3 신호 <span class="info-btn" onclick="showInfo('s3')">ⓘ</span></div>
+        <div id="s3List"></div>
+      </div>
+      <div class="sec" style="display:flex;align-items:center;gap:5px">
+        Candidate <span class="info-btn" onclick="showInfo('cand')">ⓘ</span></div>
+      <div id="candList"><div class="spin"><div class="spin-i"></div>로딩 중...</div></div>
+      <div class="sec" style="display:flex;align-items:center;gap:5px">
+        Watch <span class="info-btn" onclick="showInfo('watch')">ⓘ</span></div>
+      <div id="watchList"></div>
+      <div class="sec" style="display:flex;align-items:center;gap:5px">
+        Warming <span class="info-btn" onclick="showInfo('warm')">ⓘ</span></div>
+      <div id="warmList"></div>
+
+      <!-- 신호 설명 팝업 -->
+      <div class="info-popup" id="infoPopup" onclick="this.style.display='none'">
+        <div class="info-box" id="infoBox"></div>
+      </div>
+    </div>
+
+    <!-- 시장현황 탭 -->
+    <div class="page" id="page-market">
+      <div class="thermo">
+        <div class="thermo-row">
+          <span class="thermo-lbl">시장 온도</span>
+          <span class="thermo-val" id="thermoVal">계산 중...</span>
+        </div>
+        <div class="thermo-track">
+          <div class="thermo-ptr" id="thermoPtr" style="left:50%"></div>
+        </div>
+      </div>
+      <div class="sec">섹터별 평균 VPF</div>
+      <div id="sectorList"></div>
+      <div class="sec">VPF 히트맵</div>
+      <div class="hm-wrap">
+        <div class="hm-grid" id="hmGrid"><div class="spin"><div class="spin-i"></div></div></div>
+      </div>
+    </div>
+
+    <!-- 이력 탭 -->
+    <div class="page" id="page-history">
+      <div class="hist-stats">
+        <div class="hs-box"><div class="hs-n cn-g" id="hstS1">—</div><div class="hs-l">S1 발생</div></div>
+        <div class="hs-box"><div class="hs-n" id="hstTotal">—</div><div class="hs-l">총 후보</div></div>
+        <div class="hs-box"><div class="hs-n cn-b" id="hstRate">—</div><div class="hs-l">전환율</div></div>
+      </div>
+      <div class="sec">최근 30일 이력</div>
+      <div id="histList"><div class="spin"><div class="spin-i"></div></div></div>
+    </div>
+
+    <!-- 관심종목 탭 -->
+    <div class="page" id="page-watch">
+      <div class="add-box">
+        <div class="add-lbl">종목 추가</div>
+        <div class="add-row">
+          <input class="add-inp" id="wlInp" type="text"
+            placeholder="티커 입력 (TQQQ)" maxlength="10"
+            oninput="this.value=this.value.toUpperCase()"
+            onkeydown="if(event.key==='Enter')addToWatchlist()">
+          <button class="add-btn" onclick="addToWatchlist()">추가</button>
+        </div>
+      </div>
+      <div class="sec">내 관심종목 (<span id="wlCount">0</span>/30)</div>
+      <div id="wlList"></div>
+    </div>
+
+    <!-- 설정 탭 -->
+    <div class="page" id="page-settings">
+      <div class="sec">화면</div>
+      <div class="set-g">
+        <div class="set-r">
+          <div><div class="set-la">화면 모드</div></div>
+          <div class="mode-grp">
+            <button class="mode-btn" id="modeLight" onclick="setMode('light')">☀️ 라이트</button>
+            <button class="mode-btn" id="modeDark" onclick="setMode('dark')">🌙 다크</button>
+          </div>
+        </div>
+        <div class="set-r">
+          <div><div class="set-la">글자 크기</div></div>
+          <div class="fs-grp">
+            <button class="fs-btn" onclick="setFs('sm')">소</button>
+            <button class="fs-btn on" id="fsMd" onclick="setFs('md')">중</button>
+            <button class="fs-btn" onclick="setFs('lg')">대</button>
+          </div>
+        </div>
+      </div>
+      <div class="sec">알림</div>
+      <div class="set-g">
+        <div class="set-r">
+          <div><div class="set-la">푸시 알림</div><div class="set-de">S1/S3/Candidate 수신</div></div>
+          <div class="tog off" id="notiTog" onclick="toggleNoti()"></div>
+        </div>
+        <div class="set-r">
+          <div><div class="set-la">S1만 알림</div><div class="set-de">Candidate 제외</div></div>
+          <div class="tog off" id="s1Tog" onclick="toggleTog('s1Tog','s1Only')"></div>
+        </div>
+        <div class="set-r">
+          <div><div class="set-la">야간 차단</div><div class="set-de">23:00 ~ 07:00</div></div>
+          <div class="tog on" id="nightTog" onclick="toggleTog('nightTog','nightBlock')"></div>
+        </div>
+      </div>
+      <div class="sec">운영 정보</div>
+      <div class="set-g">
+        <div class="set-r">
+          <div><div class="set-la">Candidate 전환율</div></div>
+          <span class="set-val ok">66.7%</span>
+        </div>
+        <div class="set-r">
+          <div><div class="set-la">유효기간</div></div>
+          <span class="set-val">20봉</span>
+        </div>
+        <div class="set-r">
+          <div><div class="set-la">스캔 시간</div></div>
+          <span class="set-val">07:00 / 19:00 KST</span>
+        </div>
+      </div>
+      <div class="sec">앱</div>
+      <div class="set-g">
+        <div class="set-r">
+          <div><div class="set-la">홈 화면에 추가</div></div>
+          <button class="mode-btn on" id="installBtn" style="display:none"
+            onclick="installApp()">설치</button>
+          <span class="set-val" id="installInfo">브라우저 메뉴 이용</span>
+        </div>
+        <div class="set-r">
+          <div><div class="set-la">캐시 초기화</div></div>
+          <button class="mode-btn" onclick="clearCache()">초기화</button>
+        </div>
+      </div>
+      <div class="admin-link" id="adminLink" onclick="openAdmin()">
+        · · ·
+      </div>
+
+      <!-- 관리자 패널 (PIN 인증 후 표시) -->
+      <div id="adminPanel" style="display:none">
+        <div class="sec">관리자 패널</div>
+        <div class="usage-card" id="usageRead">
+          <div class="usage-title">
+            <span>Firestore 읽기</span>
+            <span class="usage-pct pct-ok" id="readPct">—</span>
+          </div>
+          <div class="usage-bar"><div class="usage-fill fill-ok" id="readBar" style="width:0%"></div></div>
+          <div class="usage-detail">
+            <span>오늘 <span id="readToday">—</span> / 50,000건</span>
+            <span>월 누적 <span id="readMonth">—</span>건</span>
+          </div>
+        </div>
+        <div class="usage-card">
+          <div class="usage-title">
+            <span>Firestore 쓰기</span>
+            <span class="usage-pct pct-ok" id="writePct">—</span>
+          </div>
+          <div class="usage-bar"><div class="usage-fill fill-ok" id="writeBar" style="width:0%"></div></div>
+          <div class="usage-detail">
+            <span>오늘 <span id="writeToday">—</span> / 20,000건</span>
+            <span>월 누적 <span id="writeMonth">—</span>건</span>
+          </div>
+        </div>
+        <div class="usage-card">
+          <div class="usage-title">
+            <span>스캔 현황</span>
+          </div>
+          <div class="usage-detail" style="font-size:.78em">
+            <span>오늘 스캔 <b id="scanCount">—</b>회</span>
+            <span>등록 기기 <b id="deviceCount">—</b>대</span>
+            <span>오류 <b id="errCount">—</b>건</span>
+          </div>
+        </div>
+        <div class="set-g" style="margin-top:8px">
+          <div class="set-r">
+            <div><div class="set-la">읽기 경고 기준</div></div>
+            <span class="set-val">85%</span>
+          </div>
+          <div class="set-r">
+            <div><div class="set-la">스캔 중지 기준</div></div>
+            <span class="set-val">95%</span>
+          </div>
+        </div>
+        <button class="admin-ctrl-btn" onclick="triggerScan()">즉시 스캔 실행 (GitHub Actions)</button>
+        <button class="admin-ctrl-btn" onclick="openFirebaseConsole()">Firebase Hosting 사용량 확인</button>
+        <button class="admin-ctrl-btn danger" onclick="pauseScan()">스캔 일시 중지</button>
+
+        <!-- 사용자 차단 -->
+        <div class="sec">사용자 차단 관리</div>
+        <div class="set-g">
+          <div class="set-r">
+            <div><div class="set-la">사용자 ID 차단</div><div class="set-de">접속 즉시 로그아웃 처리</div></div>
+            <button class="mode-btn on" onclick="blockUser()">차단</button>
+          </div>
+        </div>
+        <div id="blockedList"></div>
+
+        <!-- 초대 코드 관리 -->
+        <div class="sec">초대 코드 관리</div>
+        <div class="set-g">
+          <div class="set-r">
+            <div><div class="set-la">새 코드 생성</div><div class="set-de">최대 사용 횟수 지정</div></div>
+            <div style="display:flex;gap:4px;align-items:center">
+              <input class="inp" id="codeMaxUses" type="number" value="10"
+                style="width:52px;padding:4px 6px;font-size:.75em">
+              <button class="mode-btn on" onclick="createInviteCode()" style="white-space:nowrap">생성</button>
+            </div>
+          </div>
+        </div>
+        <div id="codeList" style="margin-bottom:8px">
+          <div class="spin"><div class="spin-i"></div></div>
+        </div>
+
+        <div class="set-version">GAN BOX Radar v2.0 · Phase 3</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 바텀 네비 -->
+  <div class="bnav">
+    <button class="ni on" onclick="showPage('radar',this)">
+      <span class="ni-i">📡</span><span class="ni-l">레이더</span>
+    </button>
+    <button class="ni" onclick="showPage('market',this)">
+      <span class="ni-i">📊</span><span class="ni-l">현황</span>
+    </button>
+    <button class="ni" onclick="showPage('history',this)">
+      <span class="ni-i">📋</span><span class="ni-l">이력</span>
+    </button>
+    <button class="ni" onclick="showPage('watch',this)">
+      <span class="ni-i">⭐</span><span class="ni-l">관심</span>
+    </button>
+    <button class="ni" onclick="showPage('settings',this)">
+      <span class="ni-i">⚙️</span><span class="ni-l">설정</span>
+    </button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
+<!-- Firebase SDK -->
 <script type="module">
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getFirestore, collection, getDocs, doc, getDoc, setDoc, deleteDoc }
+import { initializeApp }  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getFirestore, collection, getDocs, doc,
+         getDoc, setDoc, deleteDoc, addDoc,
+         query, orderBy, limit, where }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { getMessaging, getToken, onMessage }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js';
 
-// ⚠️ Firebase 콘솔 → 프로젝트 설정 → 내 앱 → 웹 앱에서 복사
+// ⚠️ Firebase 설정
 const FB = {
-  apiKey:"AIzaSyAeS1SmwQL2QcHAAh5VEKFovZcQm-DwFiY", authDomain:"ganbox-radar.firebaseapp.com",
-  projectId:"ganbox-radar", storageBucket:"ganbox-radar.firebasestorage.app",
-  messagingSenderId:"376912482178", appId:"1:376912482178:web:a7ccab69524caa64cec99b"
+  apiKey:"AIzaSyAeS1SmwQL2QcHAAh5VEKFovZcQm-DwFiY",
+  authDomain:"ganbox-radar.firebaseapp.com",
+  projectId:"ganbox-radar",
+  storageBucket:"ganbox-radar.firebasestorage.app",
+  messagingSenderId:"376912482178",
+  appId:"1:376912482178:web:a7ccab69524caa64cec99b"
 };
-// ⚠️ Firebase 콘솔 → 프로젝트 설정 → 클라우드 메시징 → 웹 푸시 인증서
 const VAPID = "BF9TDQEoRZZDOvsOut9rTjiQGMlsdZ9ZdEeV7ihieG5EA4pnSj0NLZ19XhLD1Tpn7T6MCK0d0lmZBBd762VcmqE";
-
-const app  = initializeApp(FB);
-const db   = getFirestore(app);
-const msg  = getMessaging(app);
+const TV_BASE = "https://www.tradingview.com/chart/?interval=D&symbol=";
 
 const TINFO = {
-  TQQQ:{n:"나스닥100 3배",t:1},TECL:{n:"테크 3배",t:1},SOXL:{n:"반도체 3배",t:1},
-  SPXL:{n:"S&P500 3배",t:1},UPRO:{n:"S&P500 3배",t:1},LABU:{n:"바이오 3배",t:1},
-  CURE:{n:"헬스케어 3배",t:1},FAS:{n:"금융 3배",t:1},TNA:{n:"소형주 3배",t:1},DFEN:{n:"방산 3배",t:1},
-  NVDA:{n:"엔비디아",t:2},AMD:{n:"AMD",t:2},MSFT:{n:"마이크로소프트",t:2},META:{n:"메타",t:2},
-  AMZN:{n:"아마존",t:2},GOOGL:{n:"알파벳",t:2},TSLA:{n:"테슬라",t:2},AAPL:{n:"애플",t:2},
-  QLD:{n:"나스닥 2배",t:3},SSO:{n:"S&P500 2배",t:3},SMH:{n:"반도체 ETF",t:3},
-  XLK:{n:"테크 ETF",t:3},XAR:{n:"방산 ETF",t:3},CIBR:{n:"사이버보안 ETF",t:3},
+  TQQQ:{n:"나스닥100 3배",t:1},TECL:{n:"테크 3배",t:1},
+  SOXL:{n:"반도체 3배",t:1},SPXL:{n:"S&P500 3배",t:1},
+  UPRO:{n:"S&P500 3배",t:1},LABU:{n:"바이오 3배",t:1},
+  CURE:{n:"헬스케어 3배",t:1},FAS:{n:"금융 3배",t:1},
+  TNA:{n:"소형주 3배",t:1},DFEN:{n:"방산 3배",t:1},
+  NVDA:{n:"엔비디아",t:2},AMD:{n:"AMD",t:2},
+  MSFT:{n:"마이크로소프트",t:2},META:{n:"메타",t:2},
+  AMZN:{n:"아마존",t:2},GOOGL:{n:"알파벳",t:2},
+  TSLA:{n:"테슬라",t:2},AAPL:{n:"애플",t:2},
+  QLD:{n:"나스닥 2배",t:3},SSO:{n:"S&P500 2배",t:3},
+  SMH:{n:"반도체 ETF",t:3},XLK:{n:"테크 ETF",t:3},
+  XAR:{n:"방산 ETF",t:3},CIBR:{n:"사이버보안 ETF",t:3},
 };
 
-let cData = {};
-let wl = JSON.parse(localStorage.getItem('wl')||'[]');
+const app = initializeApp(FB);
+const db  = getFirestore(app);
+const msg = getMessaging(app);
 
+// ── 사용자 ID (기기별 고유, 영구 보관) ──────────────────
+let userId = localStorage.getItem('gbr_uid');
+if (!userId) {
+  userId = crypto.randomUUID();
+  localStorage.setItem('gbr_uid', userId);
+}
+
+// ── 전역 상태 ────────────────────────────────────────────
+let cData = {};
+let wl    = JSON.parse(localStorage.getItem('wl') || '[]');
+
+// Firebase에서 관심종목 복구 (캐시 초기화 후에도 유지)
+async function syncWatchlistFromFirebase() {
+  try {
+    const snap = await getDocs(
+      query(collection(db, 'user_watchlist'),
+            where('userId', '==', userId))
+    );
+    const fbTickers = [];
+    snap.forEach(d => {
+      const tk = d.data().ticker;
+      if (tk) fbTickers.push(tk);
+    });
+    if (fbTickers.length > 0 && wl.length === 0) {
+      // 로컬이 비어있고 Firebase에 데이터 있으면 복구
+      wl = [...new Set(fbTickers)];
+      localStorage.setItem('wl', JSON.stringify(wl));
+      renderWatchlist();
+      toast('관심종목 복구 완료');
+    }
+  } catch(e) { console.error('watchlist 복구 실패:', e); }
+}
+let posModal_ticker = null;
+let pinBuf = '';
+let isAdmin = sessionStorage.getItem('gbr_admin') === '1';
+let deferredInstall = null;
+
+// ── 서비스 워커 ──────────────────────────────────────────
 if ('serviceWorker' in navigator)
   navigator.serviceWorker.register('/service-worker.js').catch(console.error);
 
-onMessage(msg, p => { toast(p.notification?.title||'알림'); loadData(); });
+onMessage(msg, p => {
+  toast(p.notification?.title || '알림');
+  loadData();
+});
 
-window.loadData = async () => {
+// ── 초대 코드 인증 ──────────────────────────────────────
+async function checkAuth() {
+  if (localStorage.getItem('gbr_auth') === '1') {
+    showApp(); return;
+  }
+  document.getElementById('inviteOverlay').classList.add('show');
+}
+
+window.submitInvite = async function() {
+  const code = document.getElementById('inviteInp').value.trim();
+  if (!code) return;
   try {
-    const kst = new Date(); kst.setHours(kst.getHours()+9);
-    const ds  = kst.toISOString().slice(0,10);
-    const lg  = await getDoc(doc(db,'scan_log',ds));
-    if (lg.exists()) {
-      const d = lg.data();
-      document.getElementById('scanTime').textContent = `마지막 스캔: ${d.scanned_at_kst||ds}`;
-      document.getElementById('headerSub').textContent = `오늘 ${d.tickers_scanned||0}종목 스캔`;
+    const ref = doc(db, 'valid_codes', code);
+    const d   = await getDoc(ref);
+    if (!d.exists() || !d.data().is_active) {
+      document.getElementById('inviteErr').textContent = '유효하지 않은 코드입니다.';
+      return;
     }
-    const snap = await getDocs(collection(db,'candidates'));
-    cData = {};
-    snap.forEach(d => cData[d.id] = d.data());
-    render();
+    const data    = d.data();
+    const usedBy  = data.used_by || [];
+    const maxUses = data.max_uses || 10;
+    if (usedBy.length >= maxUses && !usedBy.includes(userId)) {
+      document.getElementById('inviteErr').textContent = '사용 한도를 초과한 코드입니다.';
+      return;
+    }
+    if (!usedBy.includes(userId)) {
+      await setDoc(ref, {used_by: [...usedBy, userId]}, {merge: true});
+    }
+    localStorage.setItem('gbr_auth', '1');
+    document.getElementById('inviteOverlay').classList.remove('show');
+    showApp();
   } catch(e) {
-    console.error(e);
-    document.getElementById('headerSub').textContent='로드 실패 — Firebase 연결 확인';
-    document.getElementById('candList').innerHTML='<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-text">Firebase 연결 중 오류<br>잠시 후 새로고침 해주세요</div></div>';
-    document.getElementById('stTotal').textContent='0';
-    document.getElementById('stCand').textContent='0';
-    document.getElementById('stS1').textContent='0';
+    document.getElementById('inviteErr').textContent = '오류가 발생했습니다. 다시 시도하세요.';
   }
 };
 
-function card(ticker, d) {
-  const s = d.status||'NONE';
-  const i = TINFO[ticker]||{n:ticker,t:'—'};
-  const vc = !d.vpf?'vpf-0':d.vpf<-1?'vpf-n':d.vpf>1?'vpf-p':'vpf-0';
-  let sc='st-n',st='없음',cc='ticker-card';
-  if(s==='S1_FIRED'){sc='st-s1';st='🚨 S1';cc+=' s1';}
-  else if(s==='ACTIVE'){sc='st-c';st='🟢 후보';cc+=' candidate';}
-  const dayH = (s==='ACTIVE'||s==='S1_FIRED')?`<span class="tc-days">${d.days_active||0}봉</span>`:'';
-  const tvH  = s!=='NONE'?`<a class="tv-link" href="https://www.tradingview.com/chart/?symbol=${ticker}" target="_blank">차트 →</a>`:'';
-  return `<div class="${cc}">
-    <div class="tc-top">
-      <div><div class="tc-ticker">${ticker}</div><div class="tc-name">${i.n} · Tier ${i.t}</div></div>
-      <div style="display:flex;align-items:center;gap:8px">${dayH}<span class="tc-status ${sc}">${st}</span></div>
+function showApp() {
+  document.getElementById('mainApp').style.display = 'flex';
+  checkIfBlocked();
+  syncWatchlistFromFirebase();
+  applyMode(localStorage.getItem('gbr_mode') || 'light');
+  applyFs(localStorage.getItem('gbr_fs') || 'md');
+  if (localStorage.getItem('gbr_noti') === '1') {
+    document.getElementById('notiTog').classList.replace('off','on');
+    document.getElementById('bellBtn').classList.add('active');
+  } else {
+    document.getElementById('notiPrompt').style.display = 'flex';
+  }
+  if (localStorage.getItem('s1Only') === '1')
+    document.getElementById('s1Tog').classList.replace('off','on');
+  if (localStorage.getItem('nightBlock') !== '0')
+    document.getElementById('nightTog').classList.replace('off','on');
+  loadData();
+}
+
+// ── 데이터 로드 ──────────────────────────────────────────
+window.loadData = async function() {
+  try {
+    const kst    = new Date(); kst.setHours(kst.getHours()+9);
+    const dateStr= kst.toISOString().slice(0,10);
+    const logDoc = await getDoc(doc(db,'scan_log',dateStr));
+
+    if (logDoc.exists()) {
+      const d = logDoc.data();
+      document.getElementById('scanTime').textContent =
+        d.scanned_at_kst || dateStr;
+      document.getElementById('hdrSub').textContent =
+        `${d.tickers_scanned||0}종목 감시 중`;
+      // 데이터 오래됨 체크 (25시간)
+      const scanned = d.scanned_at?.toDate?.() || new Date(0);
+      const diff    = (Date.now() - scanned.getTime()) / 3600000;
+      document.getElementById('scanWarn').style.display =
+        diff > 25 ? 'block' : 'none';
+    } else {
+      document.getElementById('hdrSub').textContent = '스캔 대기 중';
+    }
+
+    const snap = await getDocs(collection(db,'candidates'));
+    cData = {};
+    snap.forEach(d => { cData[d.id] = d.data(); });
+
+    renderRadar();
+    renderMarket();
+  } catch(e) {
+    console.error(e);
+    document.getElementById('hdrSub').textContent = '로드 실패';
+    document.getElementById('candList').innerHTML =
+      '<div class="empty"><div class="empty-i">⚠️</div>' +
+      '<div class="empty-t">데이터 로드 실패<br>잠시 후 새로고침 해주세요</div></div>';
+    setStats(0,0,0,0);
+  }
+};
+
+// ── 레이더 렌더링 ────────────────────────────────────────
+function renderRadar() {
+  const all   = Object.entries(cData);
+  const s1    = all.filter(([,d]) => d.status==='S1');
+  const s3    = all.filter(([,d]) => d.status==='S3');
+  const cand  = all.filter(([,d]) => d.status==='CANDIDATE'||d.signal_type==='CANDIDATE');
+  const watch = all.filter(([,d]) => d.signal_type==='WATCH');
+  const warm  = all.filter(([,d]) => d.signal_type==='WARMING');
+
+  setStats(all.length, s1.length, s3.length, cand.length+s1.length+s3.length);
+
+  const s1Sec = document.getElementById('s1Sec');
+  if (s1.length) {
+    s1Sec.style.display='block';
+    document.getElementById('s1List').innerHTML = s1.map(([t,d])=>mkCard(t,d,'s1')).join('');
+  } else s1Sec.style.display='none';
+
+  const s3Sec = document.getElementById('s3Sec');
+  if (s3.length) {
+    s3Sec.style.display='block';
+    document.getElementById('s3List').innerHTML = s3.map(([t,d])=>mkCard(t,d,'s3')).join('');
+  } else s3Sec.style.display='none';
+
+  document.getElementById('candList').innerHTML = cand.length
+    ? cand.map(([t,d])=>mkCard(t,d,'cand')).join('')
+    : '<div class="empty"><div class="empty-i">📡</div>' +
+      '<div class="empty-t">현재 Candidate 없음<br>07:00 / 19:00 KST 자동 스캔</div></div>';
+
+  document.getElementById('watchList').innerHTML = watch.length
+    ? watch.map(([t,d])=>mkCard(t,d,'watch')).join('')
+    : '<div class="empty" style="padding:12px 0"><div class="empty-t">Watch 종목 없음</div></div>';
+
+  document.getElementById('warmList').innerHTML = warm.length
+    ? warm.map(([t,d])=>mkCard(t,d,'warm')).join('')
+    : '<div class="empty" style="padding:12px 0"><div class="empty-t">Warming 종목 없음</div></div>';
+}
+
+function setStats(total,s1,s3,cand) {
+  document.getElementById('stTotal').textContent = total;
+  document.getElementById('stS1').textContent    = s1;
+  document.getElementById('stS3').textContent    = s3;
+  document.getElementById('stCand').textContent  = cand;
+}
+
+function mkCard(ticker, d, type) {
+  const info = TINFO[ticker] || {n:ticker, t:'—'};
+  const bmap = {s1:'bg-s1 S1',s3:'bg-s3 S3',cand:'bg-c 후보',watch:'bg-w Watch',warm:'bg-wm Warm'};
+  const [bcls,blbl] = (bmap[type]||'bg-n 없음').split(' ');
+  const vpf   = d.vpf!=null ? d.vpf.toFixed(2) : 'N/A';
+  const close = d.close!=null ? `$${d.close.toFixed(2)}` : '—';
+  const days  = (d.days_active&&type!=='s1'&&type!=='s3')
+    ? `<span class="card-days">${d.days_active}봉</span>` : '';
+
+  // 포지션 등록 여부 확인 (wl에서)
+  const hasPos = wl.some(w => w===ticker && localStorage.getItem(`pos_${ticker}`));
+
+  return `<div class="card ${type}">
+    <div class="card-top">
+      <div>
+        <div class="card-tk">${ticker}</div>
+        <div class="card-nm">${info.n} · Tier ${info.t}</div>
+      </div>
+      <div class="card-r">
+        ${days}
+        <span class="badge ${bcls}">${blbl}</span>
+      </div>
     </div>
-    <div class="tc-bottom">
-      <div class="tc-meta">
-        <span>VPF <b class="${vc}">${d.vpf!=null?d.vpf.toFixed(2):'N/A'}</b></span>
-        <span>가격 <b>${d.close!=null?'$'+d.close.toFixed(2):'—'}</b></span>
-      </div>${tvH}
-    </div></div>`;
+    <div class="card-bot">
+      <div class="card-meta">
+        <span>VPF <b class="${d.vpf!=null&&d.vpf<0?'vpfn':'vpfp'}">${vpf}</b></span>
+        <span>${close}</span>
+      </div>
+      <a class="tv-btn" href="${TV_BASE}${ticker}" target="_blank">차트 →</a>
+    </div>
+  </div>`;
 }
 
-function render() {
-  const all = Object.entries(cData);
-  const s1  = all.filter(([,d])=>d.status==='S1_FIRED');
-  const ca  = all.filter(([,d])=>d.status==='ACTIVE');
-  const no  = all.filter(([,d])=>d.status!=='ACTIVE'&&d.status!=='S1_FIRED');
-  document.getElementById('stTotal').textContent = all.length;
-  document.getElementById('stCand').textContent  = ca.length;
-  document.getElementById('stS1').textContent    = s1.length;
-  const s1sec = document.getElementById('s1Section');
-  if(s1.length){s1sec.style.display='block';document.getElementById('s1List').innerHTML=s1.map(([t,d])=>card(t,d)).join('');}
-  else s1sec.style.display='none';
-  document.getElementById('candList').innerHTML = ca.length
-    ? ca.map(([t,d])=>card(t,d)).join('')
-    : '<div class="empty"><div class="empty-icon">📡</div><div class="empty-text">현재 Candidate 없음<br>매일 06:30 스캔 결과를 확인하세요</div></div>';
-  document.getElementById('allList').innerHTML = no.length
-    ? no.map(([t,d])=>card(t,d)).join('')
-    : '<div class="empty"><div class="empty-icon">🛰</div><div class="empty-text">스캐너 실행 대기 중<br>매일 06:30 KST 자동 스캔</div></div>';
-}
+// ── 시장현황 렌더링 ──────────────────────────────────────
+function renderMarket() {
+  const all = Object.entries(cData).filter(([,d])=>d.vpf!=null);
+  if (!all.length) return;
 
-function renderWL() {
-  document.getElementById('wlCount').textContent = wl.length;
-  const el = document.getElementById('wlItems');
-  if(!wl.length){el.innerHTML='<div class="empty"><div class="empty-icon">⭐</div><div class="empty-text">관심 종목을 추가해보세요</div></div>';return;}
-  el.innerHTML = wl.map(t=>{
-    const i=TINFO[t]||{n:t,t:'—'};
-    const d=cData[t];
-    let stH='<span class="wl-st st-n">대기중</span>';
-    if(d?.status==='S1_FIRED') stH='<span class="wl-st st-s1">🚨 S1</span>';
-    else if(d?.status==='ACTIVE') stH=`<span class="wl-st st-c">🟢 ${d.days_active||0}봉</span>`;
-    return `<div class="wl-item">
-      <div><div class="wl-ticker">${t}</div><div class="wl-name">${i.n} · Tier ${i.t}</div></div>
-      <div style="display:flex;align-items:center;gap:8px">${stH}
-        <button class="del-btn" onclick="removeTicker('${t}')">×</button>
-      </div></div>`;
+  // 시장 온도
+  const avg = all.reduce((s,[,d])=>s+d.vpf,0)/all.length;
+  const pct = Math.max(0,Math.min(100,((avg+3)/6)*100));
+  const thermoLabels = avg<-2?'강한 침체':avg<-1?'침체':avg<0?'약세':avg<1?'중립':'강세';
+  document.getElementById('thermoVal').textContent = thermoLabels;
+  document.getElementById('thermoPtr').style.left = pct+'%';
+
+  // 섹터별
+  const t1 = all.filter(([,d])=>TINFO[all.find(([t])=>t===Object.keys(TINFO)[0])?.[0]]?.t===1);
+  const byTier = {1:[],2:[],3:[]};
+  all.forEach(([tk,d])=>{ const t=TINFO[tk]?.t||3; byTier[t].push(d.vpf); });
+  document.getElementById('sectorList').innerHTML = [1,2,3].map(t=>{
+    const vals = byTier[t];
+    if(!vals.length) return '';
+    const avg2 = vals.reduce((a,b)=>a+b,0)/vals.length;
+    const cls  = avg2<-1?'cn-r':avg2<0?'cn-y':'cn-g';
+    const lbl  = {1:'Tier 1 레버리지',2:'Tier 2 대형주',3:'Tier 3 섹터'}[t];
+    return `<div class="sector-bar">
+      <span class="sector-lbl">${lbl}</span>
+      <span class="sector-val ${cls}">${avg2>=0?'+':''}${avg2.toFixed(2)}</span>
+    </div>`;
+  }).join('');
+
+  // 히트맵
+  const sorted = [...all].sort((a,b)=>a[1].vpf-b[1].vpf);
+  document.getElementById('hmGrid').innerHTML = sorted.map(([tk,d])=>{
+    const v=d.vpf; const vc=v<-1?'hm-s':v<-0.5?'hm-w':v<0?'hm-wm':v<1?'hm-n':'hm-c';
+    return `<div class="hmc ${vc}">
+      <div class="hmc-tk">${tk}</div>
+      <div class="hmc-v">${v>=0?'+':''}${v.toFixed(1)}</div>
+    </div>`;
   }).join('');
 }
 
-window.addTicker = () => {
-  const el = document.getElementById('tickerInput');
-  const t  = el.value.trim().toUpperCase();
-  if(!t) return;
-  if(wl.includes(t)){toast('이미 추가된 종목');return;}
-  wl.push(t); localStorage.setItem('wl',JSON.stringify(wl));
-  setDoc(doc(db,'user_watchlist',t),{ticker:t,added_at:new Date().toISOString()}).catch(console.error);
-  el.value=''; renderWL(); toast(`${t} 추가됨`);
-};
-
-window.removeTicker = t => {
-  wl=wl.filter(x=>x!==t); localStorage.setItem('wl',JSON.stringify(wl));
-  deleteDoc(doc(db,'user_watchlist',t)).catch(console.error);
-  renderWL(); toast(`${t} 삭제됨`);
-};
-
-window.toggleNoti = async () => {
-  if(Notification.permission==='granted'){toast('알림 활성화 상태');document.getElementById('notiTog').checked=true;}
-  else await reqNoti();
-};
-
-window.handleNotiToggle = async el => { if(el.checked) await reqNoti(); };
-
-async function reqNoti() {
+// ── 이력 로드 ────────────────────────────────────────────
+async function loadHistory() {
   try {
-    const p = await Notification.requestPermission();
-    if(p!=='granted'){toast('알림 권한이 거부됐습니다');document.getElementById('notiTog').checked=false;return;}
-    const token = await getToken(msg,{vapidKey:VAPID});
-    if(token){
-      await setDoc(doc(db,'fcm_tokens',token),{token,platform:'android-web',created_at:new Date().toISOString()});
-      localStorage.setItem('fcm_token',token);
-      document.getElementById('notiTog').checked=true;
-      document.getElementById('bellBtn').classList.add('on');
-      document.getElementById('bellDot').classList.add('show');
-      toast('✅ 알림 설정 완료');
-    }
-  } catch(e){toast('알림 설정 실패: '+e.message);}
+    const q    = query(collection(db,'history'), orderBy('closed_at','desc'), limit(50));
+    const snap = await getDocs(q);
+    const items = [];
+    snap.forEach(d=>items.push(d.data()));
+
+    const s1cnt = items.filter(d=>d.outcome==='S1'||d.outcome==='S3').length;
+    const rate  = items.length ? Math.round(s1cnt/items.length*100) : 0;
+
+    document.getElementById('hstS1').textContent    = s1cnt;
+    document.getElementById('hstTotal').textContent = items.length;
+    document.getElementById('hstRate').textContent  = rate+'%';
+
+    document.getElementById('histList').innerHTML = items.length
+      ? items.map(d=>{
+          const outcls = d.outcome==='S1'||d.outcome==='S3' ? 'ho-s1'
+                       : d.outcome==='EMA_REENTER' ? 'ho-ema'
+                       : d.outcome==='EXPIRED' ? 'ho-exp' : 'ho-exp';
+          const outlbl = d.outcome==='S1'?'S1 발생':d.outcome==='S3'?'S3 발생'
+                       : d.outcome==='EMA_REENTER'?'EMA 재진입'
+                       : d.outcome==='EXPIRED'?'기간 만료':'소멸';
+          const closed = d.closed_at?.toDate?.()?.toLocaleDateString('ko-KR') || '—';
+          return `<div class="hist">
+            <div class="hist-top">
+              <span class="hist-tk">${d.ticker||'—'}</span>
+              <span class="hist-out ${outcls}">${outlbl}</span>
+            </div>
+            <div class="hist-meta">
+              <span>${closed} 종료</span>
+              <span>${d.lifetime_bars||'—'}봉 유지</span>
+              <span>VPF ${d.vpf_at_create!=null?d.vpf_at_create.toFixed(2):'—'}</span>
+            </div>
+          </div>`;
+        }).join('')
+      : '<div class="empty"><div class="empty-i">📋</div><div class="empty-t">이력 없음</div></div>';
+  } catch(e) { console.error(e); }
 }
 
-window.showPage = (p,b) => {
-  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
-  document.getElementById('page-'+p).classList.add('active');
-  b.classList.add('active');
-  if(p==='watchlist') renderWL();
+// ── 관심종목 ─────────────────────────────────────────────
+function renderWatchlist() {
+  document.getElementById('wlCount').textContent = wl.length;
+  const el = document.getElementById('wlList');
+  if (!wl.length) {
+    el.innerHTML='<div class="empty"><div class="empty-i">⭐</div>' +
+      '<div class="empty-t">관심 종목을 추가해보세요</div></div>'; return;
+  }
+  el.innerHTML = wl.map(tk=>{
+    const info = TINFO[tk]||{n:tk,t:'—'};
+    const d    = cData[tk];
+    const bmap = {S1:'bg-s1 S1',S3:'bg-s3 S3',
+                  CANDIDATE:'bg-c 후보',WATCH:'bg-w Watch',WARMING:'bg-wm Warm'};
+    const st   = d?.signal_type || d?.status;
+    const [bcls,blbl] = (bmap[st]||'bg-n 대기').split(' ');
+    const posData = localStorage.getItem(`pos_${tk}`);
+    // 포지션 수익률 계산 (전일 종가 기준)
+    let posHtml = `<span class="wl-pos" onclick="openPosModal('${tk}')">TP/SL</span>`;
+    if (posData) {
+      const pos     = JSON.parse(posData);
+      const curPrice= cData[tk]?.close;
+      if (curPrice && pos.entry) {
+        const pnl = ((curPrice - pos.entry) / pos.entry * 100).toFixed(1);
+        const pnlCls = pnl >= 0 ? 'vpfp' : 'vpfn';
+        posHtml = `<span class="wl-pos" onclick="editPos('${tk}')"
+          style="color:var(--g)">
+          <b class="${pnlCls}">${pnl>=0?'+':''}${pnl}%</b>
+        </span>`;
+      } else {
+        posHtml = `<span class="wl-pos" onclick="editPos('${tk}')" style="color:var(--g)">포지션 ✓</span>`;
+      }
+    }
+    const hasPosHtml = posHtml;
+    return `<div class="wl-item">
+      <div>
+        <div class="wl-tk">${tk}</div>
+        <div class="wl-nm">${info.n} · Tier ${info.t}</div>
+      </div>
+      <div class="wl-r">
+        <span class="badge ${bcls}">${blbl}</span>
+        ${hasPosHtml}
+        <button class="del-btn" onclick="removeFromWatchlist('${tk}')">×</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+window.addToWatchlist = function() {
+  const el = document.getElementById('wlInp');
+  const tk = el.value.trim().toUpperCase();
+  if (!tk) return;
+  if (wl.length >= 30) { toast('관심종목은 최대 30개입니다'); return; }
+  if (wl.includes(tk)) { toast('이미 추가된 종목입니다'); return; }
+  wl.push(tk);
+  saveWl();
+  el.value = '';
+  renderWatchlist();
+  toast(`${tk} 추가됨`);
 };
 
-window.clearCache = async () => {
-  const k = await caches.keys();
-  await Promise.all(k.map(x=>caches.delete(x)));
+window.removeFromWatchlist = function(tk) {
+  wl = wl.filter(t=>t!==tk);
+  localStorage.removeItem(`pos_${tk}`);
+  saveWl();
+  renderWatchlist();
+  toast(`${tk} 삭제됨`);
+};
+
+async function saveWl() {
+  localStorage.setItem('wl', JSON.stringify(wl));
+  // Firebase에도 userId 기준으로 저장
+  try {
+    for (const tk of wl) {
+      await setDoc(doc(db,`user_watchlist/${userId}__${tk}`),
+        {ticker:tk, userId, added_at:new Date().toISOString()});
+    }
+  } catch(e) { console.error(e); }
+}
+
+// ── 포지션 모달 ──────────────────────────────────────────
+window.openPosModal = function(ticker) {
+  posModal_ticker = ticker;
+  document.getElementById('posModalTitle').textContent = `${ticker} 포지션 등록`;
+  const existing = JSON.parse(localStorage.getItem(`pos_${ticker}`) || 'null');
+  document.getElementById('posEntry').value = existing?.entry || '';
+  document.getElementById('posTp').value    = existing?.tp    || '';
+  document.getElementById('posSl').value    = existing?.sl    || '';
+  document.getElementById('posModal').classList.add('show');
+};
+
+window.editPos = function(ticker) { openPosModal(ticker); };
+
+window.closeModal = function() {
+  document.getElementById('posModal').classList.remove('show');
+};
+
+window.savePosition = async function() {
+  const tk    = posModal_ticker;
+  const entry = parseFloat(document.getElementById('posEntry').value);
+  const tp    = parseFloat(document.getElementById('posTp').value);
+  const sl    = parseFloat(document.getElementById('posSl').value);
+  if (!tk || isNaN(entry) || isNaN(tp) || isNaN(sl)) {
+    toast('모든 값을 입력해주세요'); return;
+  }
+  const posData = {entry, tp, sl, ticker:tk, userId,
+                   fcm_token: localStorage.getItem('fcm_token')||'',
+                   status:'ACTIVE', entered_at: new Date().toISOString()};
+  localStorage.setItem(`pos_${tk}`, JSON.stringify(posData));
+  try {
+    await setDoc(doc(db,`positions/${userId}/tickers/${tk}`), posData);
+  } catch(e) { console.error(e); }
+  closeModal();
+  renderWatchlist();
+  toast(`${tk} 포지션 등록됨`);
+};
+
+// ── PIN 관리자 ───────────────────────────────────────────
+let pinAdminHash = '';
+
+window.openAdmin = function() {
+  if (isAdmin) {
+    document.getElementById('adminPanel').style.display = 'block';
+    loadAdminData();
+  } else {
+    pinBuf = '';
+    updatePinDots();
+    document.getElementById('pinErr').textContent = '';
+    document.getElementById('pinOverlay').classList.add('show');
+  }
+};
+
+window.pinKey = function(k) {
+  if (isPinLocked()) {
+    document.getElementById('pinErr').textContent =
+      `${pinLockRemaining()}분 후 다시 시도하세요`;
+    return;
+  }
+  if (pinBuf.length >= 6) return;
+  pinBuf += k;
+  updatePinDots();
+  if (pinBuf.length === 6) verifyPin();
+};
+
+window.pinDel = function() { pinBuf=pinBuf.slice(0,-1); updatePinDots(); };
+
+window.pinCancel = function() {
+  document.getElementById('pinOverlay').classList.remove('show');
+};
+
+function updatePinDots() {
+  for (let i=0;i<6;i++) {
+    const el = document.getElementById('pd'+i);
+    if (el) el.classList.toggle('fill', i < pinBuf.length);
+  }
+}
+
+// PIN 해시는 GitHub Actions 빌드 시 주입 (Firebase 저장 안 함)
+const ADMIN_HASH = '__ADMIN_PIN_HASH__';
+const PIN_FAIL_KEY  = 'gbr_pin_fails';
+const PIN_LOCK_KEY  = 'gbr_pin_lock';
+const PIN_MAX_FAILS = 3;
+const PIN_LOCK_MS   = 30 * 60 * 1000; // 30분
+
+function isPinLocked() {
+  const lockUntil = parseInt(localStorage.getItem(PIN_LOCK_KEY) || '0');
+  return Date.now() < lockUntil;
+}
+
+function pinLockRemaining() {
+  const lockUntil = parseInt(localStorage.getItem(PIN_LOCK_KEY) || '0');
+  return Math.ceil((lockUntil - Date.now()) / 60000);
+}
+
+async function verifyPin() {
+  // 잠금 확인
+  if (isPinLocked()) {
+    document.getElementById('pinErr').textContent =
+      `${pinLockRemaining()}분 후 다시 시도하세요`;
+    pinBuf = ''; updatePinDots(); return;
+  }
+
+  try {
+    const hashBuf = await crypto.subtle.digest(
+      'SHA-256', new TextEncoder().encode(pinBuf));
+    const hashHex = Array.from(new Uint8Array(hashBuf))
+      .map(b=>b.toString(16).padStart(2,'0')).join('');
+
+    if (hashHex === ADMIN_HASH) {
+      // 성공 — 실패 카운터 초기화
+      localStorage.removeItem(PIN_FAIL_KEY);
+      localStorage.removeItem(PIN_LOCK_KEY);
+      isAdmin = true;
+      sessionStorage.setItem('gbr_admin','1');
+      document.getElementById('pinOverlay').classList.remove('show');
+      document.getElementById('adminPanel').style.display = 'block';
+      loadAdminData();
+    } else {
+      // 실패 — 카운터 증가
+      const fails = parseInt(localStorage.getItem(PIN_FAIL_KEY) || '0') + 1;
+      localStorage.setItem(PIN_FAIL_KEY, fails);
+      if (fails >= PIN_MAX_FAILS) {
+        localStorage.setItem(PIN_LOCK_KEY, Date.now() + PIN_LOCK_MS);
+        localStorage.removeItem(PIN_FAIL_KEY);
+        document.getElementById('pinErr').textContent = '30분 잠금됩니다';
+      } else {
+        document.getElementById('pinErr').textContent =
+          `잘못된 PIN (${fails}/${PIN_MAX_FAILS}회)`;
+      }
+      pinBuf = '';
+      setTimeout(()=>{ document.getElementById('pinErr').textContent=''; updatePinDots(); },1200);
+    }
+  } catch(e) {
+    document.getElementById('pinErr').textContent = '오류가 발생했습니다';
+  }
+}
+
+async function loadAdminData() {
+  loadInviteCodes();
+  try {
+    const kst    = new Date(); kst.setHours(kst.getHours()+9);
+    const dateStr= kst.toISOString().slice(0,10);
+    const month  = dateStr.slice(0,7);
+    const logDoc = await getDoc(doc(db,'scan_log',dateStr));
+    const monDoc = await getDoc(doc(db,'usage_monthly',month));
+    const tokDoc = await getDocs(collection(db,'fcm_tokens'));
+
+    const log = logDoc.exists() ? logDoc.data() : {};
+    const mon = monDoc.exists() ? monDoc.data() : {};
+
+    const rToday = log.reads_today_est  || 0;
+    const wToday = log.writes_today_est || 0;
+    const rMonth = mon.reads_month      || 0;
+    const wMonth = mon.writes_month     || 0;
+
+    setUsage('read',  rToday, 50000,  rMonth);
+    setUsage('write', wToday, 20000,  wMonth);
+
+    document.getElementById('scanCount').textContent  = log.scanned_at_kst || '—';
+    document.getElementById('deviceCount').textContent= tokDoc.size;
+    document.getElementById('errCount').textContent   = (log.errors||[]).length;
+  } catch(e) { console.error(e); }
+}
+
+function setUsage(type, today, limit, month) {
+  const pct   = Math.round(today/limit*100);
+  const cls   = pct<60?'ok':pct<85?'warn':'danger';
+  const fillCls= pct<60?'fill-ok':pct<85?'fill-warn':'fill-danger';
+  document.getElementById(type+'Pct').textContent  = pct+'%';
+  document.getElementById(type+'Pct').className    = 'usage-pct pct-'+cls;
+  document.getElementById(type+'Bar').style.width  = Math.min(pct,100)+'%';
+  document.getElementById(type+'Bar').className    = 'usage-fill '+fillCls;
+  document.getElementById(type+'Today').textContent= today.toLocaleString();
+  document.getElementById(type+'Month').textContent= month.toLocaleString();
+}
+
+window.triggerScan = function() {
+  window.open('https://github.com/stark7608/ganbox-radar/actions/workflows/scan.yml','_blank');
+};
+
+window.pauseScan = function() {
+  toast('GitHub Actions에서 직접 비활성화하세요');
+};
+
+// ── 초대 코드 생성 ────────────────────────────────────────
+window.createInviteCode = async function() {
+  const maxUses = parseInt(document.getElementById('codeMaxUses').value) || 10;
+  // 6자리 영숫자 랜덤 코드
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const code  = Array.from(crypto.getRandomValues(new Uint8Array(6)))
+                  .map(b => chars[b % chars.length]).join('');
+  try {
+    await setDoc(doc(db, 'valid_codes', code), {
+      code,
+      is_active:  true,
+      max_uses:   maxUses,
+      used_by:    [],
+      created_at: new Date().toISOString(),
+      created_by: userId,
+    });
+    toast(`코드 생성됨: ${code}`);
+    loadInviteCodes();
+  } catch(e) {
+    toast('생성 실패: ' + e.message);
+  }
+};
+
+// ── 초대 코드 목록 로드 ───────────────────────────────────
+async function loadInviteCodes() {
+  const el = document.getElementById('codeList');
+  try {
+    const snap = await getDocs(
+      query(collection(db,'valid_codes'), orderBy('created_at','desc'))
+    );
+    if (snap.empty) {
+      el.innerHTML = '<div style="font-size:.75em;color:var(--tx4);padding:6px 0">생성된 코드 없음</div>';
+      return;
+    }
+    el.innerHTML = '';
+    snap.forEach(d => {
+      const data     = d.data();
+      const usedCnt  = (data.used_by || []).length;
+      const maxUses  = data.max_uses || 10;
+      const isActive = data.is_active;
+      const created  = data.created_at
+        ? new Date(data.created_at).toLocaleDateString('ko-KR')
+        : '—';
+
+      const div = document.createElement('div');
+      div.className = 'code-card';
+      div.innerHTML = `
+        <div class="code-row">
+          <span class="code-val">${data.code}</span>
+          <span class="${isActive?'code-active':'code-inactive'}">
+            ${isActive?'활성':'비활성'}
+          </span>
+        </div>
+        <div class="code-meta">
+          <span>사용 ${usedCnt} / ${maxUses}명</span>
+          <span>생성 ${created}</span>
+        </div>
+        <div class="code-actions">
+          <button class="code-btn copy"
+            onclick="copyCode('${data.code}')">📋 복사</button>
+          <button class="code-btn off"
+            onclick="toggleCode('${data.code}', ${isActive})">
+            ${isActive?'비활성화':'활성화'}
+          </button>
+          <button class="code-btn del"
+            onclick="deleteCode('${data.code}')">삭제</button>
+        </div>`;
+      el.appendChild(div);
+    });
+  } catch(e) {
+    el.innerHTML = '<div style="font-size:.75em;color:var(--r)">로드 실패</div>';
+  }
+}
+
+window.copyCode = function(code) {
+  navigator.clipboard.writeText(code)
+    .then(()=>toast(`복사됨: ${code}`))
+    .catch(()=>toast(code));
+};
+
+window.toggleCode = async function(code, currentActive) {
+  try {
+    await setDoc(doc(db,'valid_codes',code),
+      {is_active: !currentActive}, {merge:true});
+    toast(currentActive ? '비활성화됨' : '활성화됨');
+    loadInviteCodes();
+  } catch(e) { toast('변경 실패'); }
+};
+
+window.deleteCode = async function(code) {
+  if (!confirm(`코드 ${code}를 삭제할까요?`)) return;
+  try {
+    await deleteDoc(doc(db,'valid_codes',code));
+    toast('삭제됨');
+    loadInviteCodes();
+  } catch(e) { toast('삭제 실패'); }
+};
+
+// ── 탭 전환 ──────────────────────────────────────────────
+window.showPage = function(p, btn) {
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.ni').forEach(x=>x.classList.remove('on'));
+  document.getElementById('page-'+p).classList.add('active');
+  btn.classList.add('on');
+  if (p==='history')   loadHistory();
+  if (p==='watch')     renderWatchlist();
+  if (p==='settings' && isAdmin) loadAdminData();
+};
+
+// ── 모드/폰트 ────────────────────────────────────────────
+window.toggleMode = function() {
+  const cur = document.documentElement.classList.contains('dark');
+  setMode(cur?'light':'dark');
+};
+
+window.setMode = function(m) {
+  document.documentElement.classList.toggle('dark', m==='dark');
+  localStorage.setItem('gbr_mode', m);
+  document.getElementById('modeLight').classList.toggle('on', m==='light');
+  document.getElementById('modeDark').classList.toggle('on',  m==='dark');
+  document.getElementById('themeColor').content = m==='dark'?'#0f0f0f':'#f7f7f7';
+};
+
+function applyMode(m) { setMode(m); }
+
+window.setFs = function(s) {
+  document.documentElement.classList.remove('fs-sm','fs-lg');
+  if (s==='sm') document.documentElement.classList.add('fs-sm');
+  if (s==='lg') document.documentElement.classList.add('fs-lg');
+  localStorage.setItem('gbr_fs', s);
+  document.querySelectorAll('.fs-btn').forEach(b=>b.classList.remove('on'));
+  const map = {sm:0,md:1,lg:2};
+  document.querySelectorAll('.fs-btn')[map[s]||1].classList.add('on');
+};
+
+function applyFs(s) { setFs(s); }
+
+// ── 토글 ─────────────────────────────────────────────────
+window.toggleTog = function(id, key) {
+  const el = document.getElementById(id);
+  const on = el.classList.contains('off');
+  el.classList.toggle('on',  on);
+  el.classList.toggle('off', !on);
+  localStorage.setItem(key, on?'1':'0');
+};
+
+// ── 알림 ─────────────────────────────────────────────────
+window.toggleNoti = async function() {
+  if (Notification.permission==='granted')
+    toast('알림이 이미 활성화되어 있습니다.');
+  else await requestNoti();
+};
+
+window.requestNoti = async function() {
+  const p = await Notification.requestPermission();
+  if (p!=='granted') { toast('알림 권한이 거부됐습니다'); return; }
+  try {
+    const token = await getToken(msg, {vapidKey:VAPID});
+    if (token) {
+      await setDoc(doc(db,'fcm_tokens',token),
+        {token, userId, platform:'web', created_at:new Date().toISOString()});
+      localStorage.setItem('fcm_token', token);
+      localStorage.setItem('gbr_noti', '1');
+      document.getElementById('notiTog').classList.replace('off','on');
+      document.getElementById('bellBtn').classList.add('active');
+      document.getElementById('notiPrompt').style.display='none';
+      toast('✅ 알림 설정 완료');
+    }
+  } catch(e) { toast('알림 설정 실패: '+e.message); }
+};
+
+// ── PWA 설치 ─────────────────────────────────────────────
+window.addEventListener('beforeinstallprompt', e=>{
+  e.preventDefault(); deferredInstall=e;
+  document.getElementById('installBtn').style.display='block';
+  document.getElementById('installInfo').style.display='none';
+});
+
+window.installApp = async function() {
+  if (!deferredInstall) return;
+  deferredInstall.prompt();
+  const {outcome} = await deferredInstall.userChoice;
+  if (outcome==='accepted') toast('✅ 설치 완료');
+  deferredInstall=null;
+};
+
+// ── 유틸 ─────────────────────────────────────────────────
+window.clearCache = async function() {
+  const keys = await caches.keys();
+  await Promise.all(keys.map(k=>caches.delete(k)));
   toast('캐시 초기화 완료');
   setTimeout(()=>location.reload(),1000);
 };
 
-function toast(m){
+window.toast = function(m) {
   const t=document.getElementById('toast');
   t.textContent=m; t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),2500);
+};
+
+// ── 신호 설명 팝업 ───────────────────────────────────────
+const INFO_DATA = {
+  s1: {
+    title: 'S1 신호 — 집중 매수',
+    body:  'VPF가 Zone A(-1.0 이하)에서 기울기가 음전환된 상태로 DN-BOX → UP-BOX 전환.\n\n가장 강력한 진입 신호입니다. TradingView에서 GAN BOX 패널을 확인하고 Final Score, RR 등을 검토 후 진입하세요.',
+    stats: [{v:'90.9%',l:'백테스트 승률'},{v:'+44%',l:'CAGR'},{v:'22건',l:'검증 건수'}]
+  },
+  s3: {
+    title: 'S3 신호 — 매수 신호',
+    body:  'VPF가 Zone B(-1.0~0) 구간에서 UP-BOX 전환.\n\nS1보다 얕은 조정 후 반등 신호입니다. 선행 감지가 어려워 당일 즉시 대응이 필요합니다.',
+    stats: [{v:'~70%',l:'예상 승률'},{v:'0봉',l:'평균 선행'},{v:'24건',l:'검증 건수'}]
+  },
+  cand: {
+    title: 'Candidate — S1 형성 중',
+    body:  'VPF Zone A + 기울기 음전환 + DN-BOX 조건을 충족한 종목.\n\n평균 10봉(2주) 후 S1 전환 가능성이 있습니다. 아직 신호가 아니므로 TradingView 확인 후 관심 등록만 권장합니다.',
+    stats: [{v:'66.7%',l:'S1 전환율'},{v:'10봉',l:'평균 선행'},{v:'20봉',l:'유효기간'}]
+  },
+  watch: {
+    title: 'Watch — 관심 구간 진입',
+    body:  'VPF가 -1.0 ~ -0.5 구간 + DN-BOX 상태.\n\nCandidate 진입 전 단계입니다. 아직 조건이 충분하지 않으며 추가 하락 시 Candidate로 강화될 수 있습니다.',
+    stats: [{v:'-1.0~-0.5',l:'VPF 범위'},{v:'DN-BOX',l:'상태'},{v:'관심',l:'대응 수준'}]
+  },
+  warm: {
+    title: 'Warming — 하락 초기 감지',
+    body:  'VPF가 0 미만 + DN-BOX 상태.\n\n가장 초기 단계입니다. S1까지 상당한 시간이 필요할 수 있으며 참고용으로만 활용하세요.',
+    stats: [{v:'VPF < 0',l:'기준'},{v:'DN-BOX',l:'상태'},{v:'초기',l:'단계'}]
+  },
+};
+
+window.showInfo = function(type) {
+  const d   = INFO_DATA[type];
+  if (!d) return;
+  const statsHtml = (d.stats||[]).map(s=>
+    `<div class="info-stat-item"><div class="info-stat-val">${s.v}</div><div class="info-stat-lbl">${s.l}</div></div>`
+  ).join('');
+  document.getElementById('infoBox').innerHTML = `
+    <div class="info-title">${d.title}</div>
+    <div class="info-body" style="white-space:pre-line">${d.body}</div>
+    ${statsHtml ? `<div class="info-stat">${statsHtml}</div>` : ''}
+    <div style="font-size:.7em;color:var(--tx4);text-align:center;margin-top:10px">탭하여 닫기</div>`;
+  document.getElementById('infoPopup').style.display='flex';
+};
+
+// ── 사용자 차단 ──────────────────────────────────────────
+window.blockUser = async function() {
+  const uid = prompt('차단할 사용자 ID를 입력하세요 (gbr_uid 값):');
+  if (!uid || !uid.trim()) return;
+  try {
+    await setDoc(doc(db,'blocked_users',uid.trim()),
+      {userId:uid.trim(), blocked_at: new Date().toISOString()});
+    toast('차단 완료: ' + uid.trim().slice(0,8) + '...');
+    loadBlockedList();
+  } catch(e) { toast('차단 실패'); }
+};
+
+async function loadBlockedList() {
+  try {
+    const snap = await getDocs(collection(db,'blocked_users'));
+    const el   = document.getElementById('blockedList');
+    if (!el) return;
+    if (snap.empty) {
+      el.innerHTML='<div style="font-size:.75em;color:var(--tx4);padding:4px 0">차단된 사용자 없음</div>';
+      return;
+    }
+    el.innerHTML = '';
+    snap.forEach(d => {
+      const uid   = d.id;
+      const div   = document.createElement('div');
+      div.className = 'set-g';
+      div.style.marginBottom = '4px';
+      div.innerHTML = `<div class="set-r">
+        <div><div class="set-la" style="font-family:monospace;font-size:.72em">
+          ${uid.slice(0,16)}...</div></div>
+        <button class="mode-btn" style="color:var(--r)"
+          onclick="unblockUser('${uid}')">해제</button>
+      </div>`;
+      el.appendChild(div);
+    });
+  } catch(e) { console.error(e); }
 }
 
-let dP;
-window.addEventListener('beforeinstallprompt',e=>{
-  e.preventDefault(); dP=e;
-  document.getElementById('installBanner').style.display='flex';
-  ['installBtn1','installBtn2'].forEach(id=>{
-    const b=document.getElementById(id);
-    if(b) b.onclick=async()=>{if(!dP)return;dP.prompt();await dP.userChoice;dP=null;
-      document.getElementById('installBanner').style.display='none';toast('설치 완료!');};
-  });
-});
+window.unblockUser = async function(uid) {
+  try {
+    await deleteDoc(doc(db,'blocked_users',uid));
+    toast('차단 해제됨');
+    loadBlockedList();
+  } catch(e) { toast('해제 실패'); }
+};
 
-if(Notification.permission==='granted'){
-  document.getElementById('notiTog').checked=true;
-  document.getElementById('bellBtn').classList.add('on');
+// 앱 시작 시 차단 여부 확인
+async function checkIfBlocked() {
+  try {
+    const d = await getDoc(doc(db,'blocked_users',userId));
+    if (d.exists()) {
+      localStorage.removeItem('gbr_auth');
+      localStorage.removeItem('gbr_uid');
+      document.getElementById('mainApp').style.display='none';
+      document.getElementById('inviteOverlay').classList.add('show');
+      document.getElementById('inviteErr').textContent = '접근이 제한된 계정입니다.';
+    }
+  } catch(e) { console.error(e); }
 }
-if(localStorage.getItem('s1Only')==='true')
-  document.getElementById('s1OnlyTog').checked=true;
 
-loadData();
+window.openFirebaseConsole = function() {
+  window.open('https://console.firebase.google.com/project/ganbox-radar/usage', '_blank');
+};
+
+// ── 초대 코드 시도 잠금 ──────────────────────────────────
+const INVITE_FAIL_KEY  = 'gbr_inv_fails';
+const INVITE_LOCK_KEY  = 'gbr_inv_lock';
+const INVITE_MAX_FAILS = 3;
+const INVITE_LOCK_MS   = 30 * 60 * 1000;
+
+function isInviteLocked() {
+  return Date.now() < parseInt(localStorage.getItem(INVITE_LOCK_KEY)||'0');
+}
+
+// submitInvite에 잠금 로직 추가
+const _origSubmitInvite = window.submitInvite;
+window.submitInvite = async function() {
+  if (isInviteLocked()) {
+    const rem = Math.ceil((parseInt(localStorage.getItem(INVITE_LOCK_KEY))-Date.now())/60000);
+    document.getElementById('inviteErr').textContent = `${rem}분 후 다시 시도하세요`;
+    return;
+  }
+  const code = document.getElementById('inviteInp').value.trim();
+  try {
+    const ref = await getDoc(doc(db,'valid_codes',code));
+    if (!ref.exists() || !ref.data().is_active) {
+      const fails = parseInt(localStorage.getItem(INVITE_FAIL_KEY)||'0') + 1;
+      localStorage.setItem(INVITE_FAIL_KEY, fails);
+      if (fails >= INVITE_MAX_FAILS) {
+        localStorage.setItem(INVITE_LOCK_KEY, Date.now() + INVITE_LOCK_MS);
+        localStorage.removeItem(INVITE_FAIL_KEY);
+        document.getElementById('inviteErr').textContent = '30분 잠금됩니다';
+      } else {
+        document.getElementById('inviteErr').textContent =
+          `유효하지 않은 코드입니다. (${fails}/${INVITE_MAX_FAILS}회)`;
+      }
+      return;
+    }
+    // 성공
+    localStorage.removeItem(INVITE_FAIL_KEY);
+    localStorage.removeItem(INVITE_LOCK_KEY);
+    const data    = ref.data();
+    const usedBy  = data.used_by || [];
+    const maxUses = data.max_uses || 10;
+    if (usedBy.length >= maxUses && !usedBy.includes(userId)) {
+      document.getElementById('inviteErr').textContent = '사용 한도를 초과한 코드입니다.';
+      return;
+    }
+    if (!usedBy.includes(userId)) {
+      await setDoc(doc(db,'valid_codes',code),{used_by:[...usedBy,userId]},{merge:true});
+    }
+    localStorage.setItem('gbr_auth','1');
+    document.getElementById('inviteOverlay').classList.remove('show');
+    showApp();
+  } catch(e) {
+    document.getElementById('inviteErr').textContent = '오류가 발생했습니다.';
+  }
+};
+
+// ── loadAdminData에 차단 목록 로드 추가 ─────────────────
+const _origLoadAdmin = loadAdminData;
+async function loadAdminData() {
+  await _origLoadAdmin();
+  loadBlockedList();
+}
+
+// ── 시작 ─────────────────────────────────────────────────
+checkAuth();
 </script>
 </body>
 </html>
