@@ -81,7 +81,40 @@ def check_tp_sl(tickers_data: dict):
             print(f"  🛑 {ticker} SL 도달 ${current:.2f}")
 
 
-def run_scan():
+import requests as _requests
+
+def _make_session():
+    """브라우저처럼 보이는 세션 생성 — Rate Limit 우회"""
+    s = _requests.Session()
+    s.headers.update({
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+                      'AppleWebKit/537.36 (KHTML, like Gecko) '
+                      'Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+    })
+    return s
+
+def download_with_retry(ticker: str, retries: int = 3) -> object:
+    """yfinance Rate Limit 재시도 로직"""
+    for i in range(retries):
+        try:
+            session = _make_session()
+            df = yf.download(ticker, period="3y",
+                             progress=False, auto_adjust=True,
+                             session=session)
+            if df is not None and len(df) >= 500:
+                return df
+            if i < retries - 1:
+                time.sleep(5 * (i + 1))
+        except Exception as e:
+            if "RateLimit" in str(e) or "Too Many" in str(e):
+                wait = 30 * (i + 1)
+                print(f"       ⚠️  Rate Limit — {wait}초 대기 후 재시도")
+                time.sleep(wait)
+            else:
+                raise e
+    return None
     print("=" * 56)
     print(f"  🛰  GAN BOX Radar v2.0 — {datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}")
     print("=" * 56)
@@ -111,8 +144,7 @@ def run_scan():
         print(f"  [{i:02d}/{total}] {ticker} ({cfg['name']}) ...")
 
         try:
-            df = yf.download(ticker, period="3y",
-                             progress=False, auto_adjust=True)
+            df = download_with_retry(ticker)
             if df is None or len(df) < 500:
                 raise ValueError(f"데이터 부족: {len(df) if df is not None else 0}봉")
 
@@ -162,7 +194,7 @@ def run_scan():
             print(f"       ❌ 오류: {e}")
             errors.append(ticker)
 
-        time.sleep(SETTINGS["yfinance_delay_sec"])
+        time.sleep(SETTINGS["yfinance_delay_sec"] + 1.5)
 
     # TP/SL 체크
     print("\n  TP/SL 포지션 체크...")
