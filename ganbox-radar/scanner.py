@@ -24,9 +24,11 @@ from notifier import (
 
 
 def is_market_day() -> bool:
-    """오늘이 NYSE 거래일인지 확인"""
+    """오늘이 NYSE 거래일인지 확인 (KST 기준 날짜 사용)"""
     nyse  = mcal.get_calendar("NYSE")
-    today = datetime.datetime.utcnow().strftime("%Y-%m-%d")
+    # KST = UTC + 9
+    kst   = datetime.datetime.utcnow() + datetime.timedelta(hours=9)
+    today = kst.strftime("%Y-%m-%d")
     sched = nyse.schedule(start_date=today, end_date=today)
     return not sched.empty
 
