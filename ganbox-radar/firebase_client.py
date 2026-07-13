@@ -129,12 +129,27 @@ def get_existing_candidate(ticker: str) -> dict | None:
 
 # ── TP/SL 포지션 체크 ─────────────────────────────────────
 def get_active_positions() -> list[dict]:
-    """모든 사용자의 ACTIVE 포지션 조회"""
-    db   = get_db()
-    docs = db.collection_group("positions").where(
-        "status", "==", "ACTIVE"
-    ).stream()
-    return [{"id": d.id, "ref": d.reference, **d.to_dict()} for d in docs]
+    """positions 컬렉션 조회 — 인덱스 불필요 방식"""
+    db = get_db()
+    results = []
+    try:
+        # user_watchlist에서 userId 목록 수집
+        wl_docs = db.collection("user_watchlist").stream()
+        user_ids = set()
+        for d in wl_docs:
+            uid = d.to_dict().get("userId")
+            if uid:
+                user_ids.add(uid)
+        # 각 사용자별 포지션 조회
+        for uid in user_ids:
+            pos_docs = db.collection("positions").document(uid)\
+                         .collection("tickers")\
+                         .where("status", "==", "ACTIVE").stream()
+            for d in pos_docs:
+                results.append({"id": d.id, "ref": d.reference, **d.to_dict()})
+    except Exception as e:
+        print(f"  포지션 조회 실패: {e}")
+    return results
 
 
 def close_position(ref, status: str):
