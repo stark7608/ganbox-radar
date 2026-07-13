@@ -84,36 +84,37 @@ def check_tp_sl(tickers_data: dict):
 import requests as _requests
 
 def _make_session():
-    """브라우저처럼 보이는 세션 생성 — Rate Limit 우회"""
+    """브라우저처럼 보이는 세션"""
     s = _requests.Session()
     s.headers.update({
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) '
                       'AppleWebKit/537.36 (KHTML, like Gecko) '
                       'Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.5',
     })
     return s
 
 def download_with_retry(ticker: str, retries: int = 3) -> object:
-    """yfinance Rate Limit 재시도 로직"""
+    """yf.Ticker().history() 방식 — yf.download() Rate Limit 우회"""
     for i in range(retries):
         try:
-            session = _make_session()
-            df = yf.download(ticker, period="3y",
-                             progress=False, auto_adjust=True,
-                             session=session)
+            time.sleep(2 + i * 3)  # 2초, 5초, 8초 점진적 대기
+            t  = yf.Ticker(ticker)
+            df = t.history(period="3y", auto_adjust=True)
             if df is not None and len(df) >= 500:
+                df.columns = [c.lower() for c in df.columns]
                 return df
-            if i < retries - 1:
-                time.sleep(5 * (i + 1))
+            # 봉 수 부족 시 재시도
+            print(f"       ⚠️  봉 수 부족 ({len(df) if df is not None else 0}봉) — 재시도 {i+1}/{retries}")
         except Exception as e:
-            if "RateLimit" in str(e) or "Too Many" in str(e):
-                wait = 30 * (i + 1)
-                print(f"       ⚠️  Rate Limit — {wait}초 대기 후 재시도")
+            err = str(e)
+            if "RateLimit" in err or "Too Many" in err or "429" in err:
+                wait = 60 * (i + 1)
+                print(f"       ⚠️  Rate Limit — {wait}초 대기")
                 time.sleep(wait)
             else:
-                raise e
+                print(f"       ⚠️  오류: {err[:80]}")
+                if i < retries - 1:
+                    time.sleep(10)
     return None
     print("=" * 56)
     print(f"  🛰  GAN BOX Radar v2.0 — {datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}")
