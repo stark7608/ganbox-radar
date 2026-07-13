@@ -116,6 +116,9 @@ def download_with_retry(ticker: str, retries: int = 3) -> object:
                 if i < retries - 1:
                     time.sleep(10)
     return None
+
+
+def run_scan():
     print("=" * 56)
     print(f"  🛰  GAN BOX Radar v2.0 — {datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}")
     print("=" * 56)
